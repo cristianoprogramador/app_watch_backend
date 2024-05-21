@@ -1,27 +1,43 @@
 import { Injectable } from "@nestjs/common";
 import { CreatePeopleDto } from "./dto/create-people.dto";
 import { UpdatePeopleDto } from "./dto/update-people.dto";
+import { PeopleRepository } from "./people.repository";
+import { PeopleDocumentType } from "@prisma/client";
+
+export type CreatePeopleData = {
+  name: string;
+  email: string;
+  document?: string;
+  typeDocument?: PeopleDocumentType;
+};
 
 @Injectable()
 export class PeopleService {
-  create(createPeopleDto: CreatePeopleDto) {
-    console.log(createPeopleDto);
-    return "This action adds a new person";
+  constructor(private readonly peopleRepository: PeopleRepository) {}
+
+  async create(createPeopleDto: CreatePeopleDto) {
+    const peopleData: CreatePeopleData = {
+      name: createPeopleDto.name,
+      email: createPeopleDto.email,
+      document: createPeopleDto.document,
+      typeDocument: createPeopleDto.typeDocument,
+    };
+    return await this.peopleRepository.create(peopleData);
   }
 
-  findOne(id: number) {
-    // Logic to find a person by ID
-    return `This action returns a person #${id}`;
+  async findOne(uuid: string) {
+    return await this.peopleRepository.findOne(uuid);
   }
 
-  update(id: number, updatePeopleDto: UpdatePeopleDto) {
-    console.log(updatePeopleDto);
-    // Logic to update a person
-    return `This action updates a person #${id}`;
+  async findAll(page: number, itemsPerPage: number, search?: string) {
+    return await this.peopleRepository.findAll(page, itemsPerPage, search);
   }
 
-  remove(id: number) {
-    // Logic to remove a person
-    return `This action removes a person #${id}`;
+  async update(uuid: string, updatePeopleDto: UpdatePeopleDto) {
+    return await this.peopleRepository.update(uuid, updatePeopleDto);
+  }
+
+  async remove(uuid: string) {
+    return await this.peopleRepository.remove(uuid);
   }
 }

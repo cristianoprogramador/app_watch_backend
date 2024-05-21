@@ -1,13 +1,14 @@
 import { Injectable } from "@nestjs/common";
 
-import { People } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
+import { CreatePeopleData } from "./people.service";
+import { UpdatePeopleDto } from "./dto/update-people.dto";
 
 @Injectable()
 export class PeopleRepository {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: People) {
+  async create(data: CreatePeopleData) {
     return this.prisma.people.create({ data });
   }
 
@@ -17,7 +18,26 @@ export class PeopleRepository {
     });
   }
 
-  async update(uuid: string, data: People) {
+  async findAll(page: number, itemsPerPage: number, search?: string) {
+    const skip = (page - 1) * itemsPerPage;
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search } },
+            { email: { contains: search } },
+            { document: { contains: search } },
+          ],
+        }
+      : {};
+
+    return this.prisma.people.findMany({
+      where,
+      skip,
+      take: itemsPerPage,
+    });
+  }
+
+  async update(uuid: string, data: UpdatePeopleDto) {
     return this.prisma.people.update({
       where: { uuid },
       data,

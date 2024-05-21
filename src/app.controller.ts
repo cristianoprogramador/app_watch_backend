@@ -1,5 +1,8 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, Res } from "@nestjs/common";
+import { Response } from "express";
+import { ApiExcludeEndpoint } from "@nestjs/swagger";
+import { AppService } from "./app.service";
+import { join } from "path";
 
 @Controller()
 export class AppController {
@@ -8,5 +11,17 @@ export class AppController {
   @Get()
   getHello(): string {
     return this.appService.getHello();
+  }
+
+  @Get("docs")
+  @ApiExcludeEndpoint()
+  getDocs(@Res() res: Response): void {
+    res.send(this.appService.getDocs());
+  }
+
+  @Get("swagger-json")
+  @ApiExcludeEndpoint()
+  getSwaggerJson(@Res() res: Response): void {
+    res.sendFile(join(__dirname, "../swagger.json")); // Ajuste o caminho conforme necessário
   }
 }

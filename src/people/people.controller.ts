@@ -6,32 +6,74 @@ import {
   Put,
   Param,
   Delete,
+  Query,
+  HttpCode,
+  HttpStatus,
 } from "@nestjs/common";
 import { PeopleService } from "./people.service";
 import { CreatePeopleDto } from "./dto/create-people.dto";
 import { UpdatePeopleDto } from "./dto/update-people.dto";
+import {
+  ApiExcludeEndpoint,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from "@nestjs/swagger";
 
+@ApiTags("Peoples")
 @Controller("people")
 export class PeopleController {
   constructor(private readonly peopleService: PeopleService) {}
 
   @Post()
+  @ApiExcludeEndpoint()
   create(@Body() createPeopleDto: CreatePeopleDto) {
     return this.peopleService.create(createPeopleDto);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.peopleService.findOne(+id);
+  @Get(":uuid")
+  @ApiOperation({ summary: "Find a people by UUID" })
+  findOne(@Param("uuid") uuid: string) {
+    return this.peopleService.findOne(uuid);
   }
 
-  @Put(":id")
-  update(@Param("id") id: string, @Body() updatePeopleDto: UpdatePeopleDto) {
-    return this.peopleService.update(+id, updatePeopleDto);
+  @Get()
+  @ApiQuery({ name: "page", required: true, type: Number })
+  @ApiQuery({ name: "itemsPerPage", required: true, type: Number })
+  @ApiQuery({ name: "search", required: false, type: String })
+  findAll(
+    @Query("page") page: string,
+    @Query("itemsPerPage") itemsPerPage: string,
+    @Query("search") search?: string
+  ) {
+    return this.peopleService.findAll(+page, +itemsPerPage, search);
   }
 
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.peopleService.remove(+id);
+  @Put(":uuid")
+  @ApiOperation({ summary: "Update a person" })
+  @ApiParam({
+    name: "uuid",
+    description: "Unique identifier of the person to update",
+  })
+  @ApiOkResponse({ description: "Person has been updated" })
+  update(
+    @Param("uuid") uuid: string,
+    @Body() updatePeopleDto: UpdatePeopleDto
+  ) {
+    return this.peopleService.update(uuid, updatePeopleDto);
+  }
+
+  @Delete(":uuid")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Delete a person by UUID" })
+  @ApiParam({
+    name: "uuid",
+    required: true,
+    description: "Unique identifier of the person to delete",
+  })
+  remove(@Param("uuid") uuid: string) {
+    return this.peopleService.remove(uuid);
   }
 }
