@@ -1,6 +1,8 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { CustomExceptionFilter } from "./error-logs/custom-exception.filter";
+import { ErrorLogsService } from "./error-logs/error-logs.service";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -33,6 +35,9 @@ async function bootstrap() {
       },
     },
   });
+  const errorLogsService = app.get(ErrorLogsService);
+  app.useGlobalFilters(new CustomExceptionFilter(errorLogsService));
+
   await app.listen(3000);
 }
 

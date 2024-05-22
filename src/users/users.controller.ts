@@ -14,9 +14,12 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import {
   ApiExcludeEndpoint,
   ApiOperation,
+  ApiParam,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { UuidValidationPipe } from "src/common/pipes/uuid-validation.pipe";
 
 @ApiTags("Users")
 @Controller("users")
@@ -29,7 +32,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get()
+  @Get("list")
   @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
   @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })
   @ApiQuery({ name: "search", required: false, type: String })
@@ -43,7 +46,17 @@ export class UsersController {
 
   @Get(":uuid")
   @ApiOperation({ summary: "Find a user by UUID" })
-  findOne(@Param("uuid") uuid: string) {
+  @ApiParam({
+    name: "uuid",
+    type: String,
+    description: "Unique identifier of the user",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "User details returned successfully",
+  })
+  @ApiResponse({ status: 404, description: "User not found" })
+  findOne(@Param("uuid", UuidValidationPipe) uuid: string) {
     return this.usersService.findOne(uuid);
   }
 

@@ -9,6 +9,7 @@ export type CreatePeopleData = {
   email: string;
   document?: string;
   typeDocument?: PeopleDocumentType;
+  profileImageUrl?: string;
 };
 
 @Injectable()
@@ -21,6 +22,7 @@ export class PeopleService {
       email: createPeopleDto.email,
       document: createPeopleDto.document,
       typeDocument: createPeopleDto.typeDocument,
+      profileImageUrl: createPeopleDto.profileImageUrl,
     };
     return await this.peopleRepository.create(peopleData);
   }

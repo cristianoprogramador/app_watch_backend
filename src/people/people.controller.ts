@@ -21,6 +21,7 @@ import {
   ApiQuery,
   ApiTags,
 } from "@nestjs/swagger";
+import { UuidValidationPipe } from "src/common/pipes/uuid-validation.pipe";
 
 @ApiTags("Peoples")
 @Controller("people")
@@ -33,12 +34,6 @@ export class PeopleController {
     return this.peopleService.create(createPeopleDto);
   }
 
-  @Get(":uuid")
-  @ApiOperation({ summary: "Find a people by UUID" })
-  findOne(@Param("uuid") uuid: string) {
-    return this.peopleService.findOne(uuid);
-  }
-
   @Get("list")
   @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
   @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })
@@ -49,6 +44,12 @@ export class PeopleController {
     @Query("search") search?: string
   ) {
     return this.peopleService.findAll(+page, +itemsPerPage, search);
+  }
+
+  @Get(":uuid")
+  @ApiOperation({ summary: "Find a people by UUID" })
+  findOne(@Param("uuid", UuidValidationPipe) uuid: string) {
+    return this.peopleService.findOne(uuid);
   }
 
   @Put(":uuid")

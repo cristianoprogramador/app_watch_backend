@@ -7,18 +7,23 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { APP_FILTER } from "@nestjs/core";
 import { CustomExceptionFilter } from "./error-logs/custom-exception.filter";
-import { ErrorLogsService } from "./error-logs/error-logs.service";
+import { ErrorLogsModule } from "./error-logs/error-logs.module";
 
 @Module({
-  imports: [PrismaModule, PeopleModule, UsersModule, AuthModule],
+  imports: [
+    PrismaModule,
+    PeopleModule,
+    UsersModule,
+    AuthModule,
+    ErrorLogsModule,
+  ],
   controllers: [AppController],
   providers: [
+    AppService,
     {
       provide: APP_FILTER,
       useClass: CustomExceptionFilter,
     },
-    ErrorLogsService,
-    AppService,
   ],
 })
 export class AppModule {}

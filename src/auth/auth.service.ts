@@ -33,7 +33,19 @@ export class AuthService {
       const payload = { email: user.email, sub: user.uuid };
       const accessToken = this.jwtService.sign(payload);
 
-      return { accessToken };
+      return {
+        accessToken,
+        userData: {
+          uuid: user.uuid,
+          email: user.email,
+          type: user.type,
+          people: {
+            uuid: people.uuid,
+            name: people.name,
+            profileImageUrl: people.profileImageUrl || "",
+          },
+        },
+      };
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

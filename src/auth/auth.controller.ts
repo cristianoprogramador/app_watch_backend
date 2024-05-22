@@ -1,5 +1,5 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body } from "@nestjs/common";
+import { Controller, Post, Body, HttpStatus } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
@@ -11,7 +11,11 @@ export class AuthController {
 
   @Post("register-new-client")
   @ApiOperation({ summary: "Register new client" })
-  @ApiResponse({ status: 201, description: "User registered successfully." })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: "User registered successfully.",
+    type: RegisterDto,
+  })
   @ApiResponse({
     status: 400,
     description: "Bad request, e.g., email or document already exists.",

@@ -26,4 +26,11 @@ export class CreatePeopleDto {
     required: false,
   })
   readonly typeDocument?: PeopleDocumentType;
+
+  @ApiProperty({
+    example: "https://example.com.br/image.jpg",
+    description: "Image URL",
+    required: false,
+  })
+  readonly profileImageUrl?: string;
 }
