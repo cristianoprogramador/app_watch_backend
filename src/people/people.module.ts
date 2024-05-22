@@ -6,5 +6,6 @@ import { PeopleRepository } from "./people.repository";
 @Module({
   controllers: [PeopleController],
   providers: [PeopleService, PeopleRepository],
+  exports: [PeopleService],
 })
 export class PeopleModule {}

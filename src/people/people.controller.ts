@@ -39,9 +39,9 @@ export class PeopleController {
     return this.peopleService.findOne(uuid);
   }
 
-  @Get()
-  @ApiQuery({ name: "page", required: true, type: Number })
-  @ApiQuery({ name: "itemsPerPage", required: true, type: Number })
+  @Get("list")
+  @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
+  @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })
   @ApiQuery({ name: "search", required: false, type: String })
   findAll(
     @Query("page") page: string,
