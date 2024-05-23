@@ -1,3 +1,5 @@
+// src\main.ts
+
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
@@ -13,6 +15,7 @@ async function bootstrap() {
       "API documentation for the application monitoring called App Watch API"
     )
     .setVersion("1.0")
+    .addBearerAuth({ in: "header", type: "http" })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -35,8 +38,14 @@ async function bootstrap() {
       },
     },
   });
+
   const errorLogsService = app.get(ErrorLogsService);
   app.useGlobalFilters(new CustomExceptionFilter(errorLogsService));
+
+  app.use((req, res, next) => {
+    console.log("Headers:", req.headers);
+    next();
+  });
 
   await app.listen(3000);
 }

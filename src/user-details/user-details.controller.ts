@@ -1,3 +1,5 @@
+// src\user-details\user-details.controller.ts
+
 import {
   Controller,
   Get,
@@ -9,8 +11,10 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBearerAuth,
   ApiExcludeEndpoint,
   ApiOkResponse,
   ApiOperation,
@@ -22,8 +26,11 @@ import { UuidValidationPipe } from "src/common/pipes/uuid-validation.pipe";
 import { UserDetailsService } from "./user-details.service";
 import { CreateUserDetailsDto } from "./dto/create-user-details.dto";
 import { UpdateUserDetailsDto } from "./dto/update-user-details.dto";
+import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 
 @ApiTags("UserDetails")
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @Controller("userDetails")
 export class UserDetailsController {
   constructor(private readonly userDetailsService: UserDetailsService) {}

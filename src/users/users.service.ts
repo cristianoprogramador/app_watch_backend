@@ -1,11 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UsersRepository } from "./users.repository";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class UsersService {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(
+    private usersRepository: UsersRepository,
+    private prisma: PrismaService
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     return this.usersRepository.create(createUserDto);
@@ -25,5 +29,15 @@ export class UsersService {
 
   async remove(uuid: string) {
     return this.usersRepository.remove(uuid);
+  }
+
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new UnauthorizedException("User not found.");
+
+    if (user.password !== password)
+      throw new UnauthorizedException("Invalid credentials.");
+
+    return user;
   }
 }

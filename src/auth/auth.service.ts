@@ -1,13 +1,16 @@
 // src/auth/auth.service.ts
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { UsersService } from "../users/users.service";
 import { RegisterDto } from "./dto/register.dto";
 import { Prisma } from "@prisma/client";
 import { UserDetailsService } from "src/user-details/user-details.service";
+import { LoginDto } from "./dto/login.dto";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private userDetailsService: UserDetailsService,
@@ -68,6 +71,39 @@ export class AuthService {
       throw new HttpException(
         "Internal server error",
         HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async login(loginDto: LoginDto) {
+    const user = await this.usersService.validateUser(
+      loginDto.email,
+      loginDto.password
+    );
+    if (!user) {
+      throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST);
+    }
+    const payload = { email: user.email, sub: user.uuid };
+    const accessToken = this.jwtService.sign(payload);
+    return {
+      accessToken,
+      user,
+    };
+  }
+
+  async verifyToken(token: string) {
+    this.logger.log(`Token received in AuthService: ${token}`);
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      this.logger.log(`Decoded token: ${JSON.stringify(decoded)}`);
+      return { isValid: true, decoded };
+    } catch (error) {
+      this.logger.error(`Token verification failed: ${error.message}`);
+      throw new HttpException(
+        "Invalid or expired token",
+        HttpStatus.UNAUTHORIZED
       );
     }
   }

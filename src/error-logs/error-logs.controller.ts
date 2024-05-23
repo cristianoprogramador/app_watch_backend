@@ -1,9 +1,17 @@
-import { ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from "@nestjs/swagger";
 import { ErrorLogsService } from "./error-logs.service";
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 
 // src/error-logs/error-logs.controller.ts
 @ApiTags("ErrorLogs")
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @Controller("errorLogs")
 export class ErrorLogsController {
   constructor(private readonly errorLogsService: ErrorLogsService) {}

@@ -1,3 +1,5 @@
+// src\user-details\user-details.module.ts
+
 import { Module } from "@nestjs/common";
 import { UserDetailsRepository } from "./user-details.repository";
 import { UserDetailsController } from "./user-details.controller";
