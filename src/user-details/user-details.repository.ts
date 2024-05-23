@@ -1,19 +1,19 @@
 import { Injectable } from "@nestjs/common";
 
 import { PrismaService } from "src/prisma/prisma.service";
-import { CreatePeopleData } from "./people.service";
-import { UpdatePeopleDto } from "./dto/update-people.dto";
+import { UpdateUserDetailsDto } from "./dto/update-user-details.dto";
+import { CreateUserDetailsData } from "./user-details.service";
 
 @Injectable()
-export class PeopleRepository {
+export class UserDetailsRepository {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: CreatePeopleData) {
-    return this.prisma.people.create({ data });
+  async create(data: CreateUserDetailsData) {
+    return this.prisma.userDetails.create({ data });
   }
 
   async findOne(uuid: string) {
-    return this.prisma.people.findUnique({
+    return this.prisma.userDetails.findUnique({
       where: { uuid },
     });
   }
@@ -30,22 +30,22 @@ export class PeopleRepository {
         }
       : {};
 
-    return this.prisma.people.findMany({
+    return this.prisma.userDetails.findMany({
       where,
       skip,
       take: itemsPerPage,
     });
   }
 
-  async update(uuid: string, data: UpdatePeopleDto) {
-    return this.prisma.people.update({
+  async update(uuid: string, data: UpdateUserDetailsDto) {
+    return this.prisma.userDetails.update({
       where: { uuid },
       data,
     });
   }
 
   async remove(uuid: string) {
-    return this.prisma.people.delete({
+    return this.prisma.userDetails.delete({
       where: { uuid },
     });
   }

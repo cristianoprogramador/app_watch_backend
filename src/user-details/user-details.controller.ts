@@ -10,9 +10,6 @@ import {
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
-import { PeopleService } from "./people.service";
-import { CreatePeopleDto } from "./dto/create-people.dto";
-import { UpdatePeopleDto } from "./dto/update-people.dto";
 import {
   ApiExcludeEndpoint,
   ApiOkResponse,
@@ -22,16 +19,19 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { UuidValidationPipe } from "src/common/pipes/uuid-validation.pipe";
+import { UserDetailsService } from "./user-details.service";
+import { CreateUserDetailsDto } from "./dto/create-user-details.dto";
+import { UpdateUserDetailsDto } from "./dto/update-user-details.dto";
 
-@ApiTags("Peoples")
-@Controller("people")
-export class PeopleController {
-  constructor(private readonly peopleService: PeopleService) {}
+@ApiTags("UserDetails")
+@Controller("userDetails")
+export class UserDetailsController {
+  constructor(private readonly userDetailsService: UserDetailsService) {}
 
   @Post()
   @ApiExcludeEndpoint()
-  create(@Body() createPeopleDto: CreatePeopleDto) {
-    return this.peopleService.create(createPeopleDto);
+  create(@Body() createUserDetailsDto: CreateUserDetailsDto) {
+    return this.userDetailsService.create(createUserDetailsDto);
   }
 
   @Get("list")
@@ -43,13 +43,13 @@ export class PeopleController {
     @Query("itemsPerPage") itemsPerPage: string,
     @Query("search") search?: string
   ) {
-    return this.peopleService.findAll(+page, +itemsPerPage, search);
+    return this.userDetailsService.findAll(+page, +itemsPerPage, search);
   }
 
   @Get(":uuid")
-  @ApiOperation({ summary: "Find a people by UUID" })
+  @ApiOperation({ summary: "Find a user-details by UUID" })
   findOne(@Param("uuid", UuidValidationPipe) uuid: string) {
-    return this.peopleService.findOne(uuid);
+    return this.userDetailsService.findOne(uuid);
   }
 
   @Put(":uuid")
@@ -61,9 +61,9 @@ export class PeopleController {
   @ApiOkResponse({ description: "Person has been updated" })
   update(
     @Param("uuid") uuid: string,
-    @Body() updatePeopleDto: UpdatePeopleDto
+    @Body() updateUserDetailsDto: UpdateUserDetailsDto
   ) {
-    return this.peopleService.update(uuid, updatePeopleDto);
+    return this.userDetailsService.update(uuid, updateUserDetailsDto);
   }
 
   @Delete(":uuid")
@@ -75,6 +75,6 @@ export class PeopleController {
     description: "Unique identifier of the person to delete",
   })
   remove(@Param("uuid") uuid: string) {
-    return this.peopleService.remove(uuid);
+    return this.userDetailsService.remove(uuid);
   }
 }

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { PeopleDocumentType } from "@prisma/client";
 
-export class UpdatePeopleDto {
+export class UpdateUserDetailsDto {
   @ApiPropertyOptional({ description: "Name of the person" })
   name?: string;
 

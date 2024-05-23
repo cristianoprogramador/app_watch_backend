@@ -13,25 +13,22 @@ import { ErrorLogsService } from "./error-logs.service";
 export class CustomExceptionFilter implements ExceptionFilter {
   constructor(private errorLogsService: ErrorLogsService) {}
 
-  async catch(exception: any, host: ArgumentsHost) {
+  async catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // Log the error using the corrected method call
-    await this.errorLogsService.logError(exception, host);
+    await this.errorLogsService.logError(exception, request);
 
     response.status(status).json({
       statusCode: status,
-      message:
-        exception.response?.message ||
-        exception.message ||
-        "Unexpected error occurred",
+      message: exception.message || "Unexpected error occurred",
       timestamp: new Date().toISOString(),
-      path: ctx.getRequest().url,
+      path: request.url,
     });
   }
 }

@@ -1,14 +1,18 @@
 // src/error-logs/error-logs.service.ts
-import { Injectable, HttpStatus, ArgumentsHost } from "@nestjs/common";
+import { Injectable, HttpStatus, HttpException } from "@nestjs/common";
 import { ErrorLogsRepository } from "./error-logs.repository";
 
 @Injectable()
 export class ErrorLogsService {
   constructor(private errorLogsRepository: ErrorLogsRepository) {}
 
-  async logError(exception: any, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const request = ctx.getRequest();
+  async logError(exception: Error, request: Request) {
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+    const response =
+      exception instanceof HttpException ? exception.getResponse() : {};
 
     const filteredHeaders = {
       "User-Agent": request.headers["user-agent"],
@@ -17,12 +21,15 @@ export class ErrorLogsService {
     };
 
     await this.errorLogsRepository.create({
-      statusCode: exception.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      statusCode: status,
       message:
-        exception.response?.message ||
-        exception.message ||
-        "Unexpected error occurred",
-      error: exception.response?.error || "Internal Server Error",
+        typeof response === "object" && "message" in response
+          ? response["message"]
+          : exception.message || "Unexpected error occurred",
+      error:
+        typeof response === "object" && "error" in response
+          ? response["error"]
+          : "Internal Server Error",
       url: request.url,
       method: request.method,
       headers: JSON.stringify(filteredHeaders),

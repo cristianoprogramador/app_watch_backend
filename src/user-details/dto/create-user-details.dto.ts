@@ -1,8 +1,8 @@
-// src/people/dto/create-people.dto.ts
+// src/people/dto/create-user-details.dto.ts
 import { ApiProperty } from "@nestjs/swagger";
 import { PeopleDocumentType } from "@prisma/client";
 
-export class CreatePeopleDto {
+export class CreateUserDetailsDto {
   @ApiProperty({ example: "John Doe", description: "Full name of the person" })
   readonly name: string;
 

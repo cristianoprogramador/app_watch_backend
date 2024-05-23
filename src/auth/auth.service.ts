@@ -2,21 +2,21 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { UsersService } from "../users/users.service";
-import { PeopleService } from "../people/people.service";
 import { RegisterDto } from "./dto/register.dto";
 import { Prisma } from "@prisma/client";
+import { UserDetailsService } from "src/user-details/user-details.service";
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
-    private peopleService: PeopleService,
+    private userDetailsService: UserDetailsService,
     private jwtService: JwtService
   ) {}
 
   async register(registerDto: RegisterDto) {
     try {
-      const people = await this.peopleService.create({
+      const userDetails = await this.userDetailsService.create({
         name: registerDto.name,
         email: registerDto.email,
         typeDocument: registerDto.typeDocument,
@@ -26,7 +26,7 @@ export class AuthService {
       const user = await this.usersService.create({
         email: registerDto.email,
         password: registerDto.password,
-        peopleUuid: people.uuid,
+        userDetailsUuid: userDetails.uuid,
         type: registerDto.type,
       });
 
@@ -39,10 +39,10 @@ export class AuthService {
           uuid: user.uuid,
           email: user.email,
           type: user.type,
-          people: {
-            uuid: people.uuid,
-            name: people.name,
-            profileImageUrl: people.profileImageUrl || "",
+          userDetails: {
+            uuid: userDetails.uuid,
+            name: userDetails.name,
+            profileImageUrl: userDetails.profileImageUrl || "",
           },
         },
       };

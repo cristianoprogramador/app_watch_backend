@@ -12,5 +12,5 @@ export class CreateUserDto {
   type: UserType;
 
   @ApiProperty({ example: "optional-uuid", required: false })
-  peopleUuid?: string;
+  userDetailsUuid?: string;
 }

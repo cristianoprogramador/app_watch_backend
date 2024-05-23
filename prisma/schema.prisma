@@ -33,13 +33,13 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  peopleUuid String? @unique @db.Uuid
-  people     People? @relation(fields: [peopleUuid], references: [uuid])
+  userDetailsUuid String?      @unique @db.Uuid
+  userDetails     UserDetails? @relation(fields: [userDetailsUuid], references: [uuid])
 
   @@map("users")
 }
 
-model People {
+model UserDetails {
   uuid            String              @id @default(uuid()) @db.Uuid
   name            String              @db.VarChar(255)
   email           String              @unique @db.VarChar(200)
@@ -53,7 +53,7 @@ model People {
 
   user User?
 
-  @@map("people")
+  @@map("user_details")
 }
 
 model ErrorLogs {
