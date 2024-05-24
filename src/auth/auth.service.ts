@@ -76,31 +76,46 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.usersService.validateUser(
-      loginDto.email,
-      loginDto.password
-    );
+    const user = await this.usersService.findByEmail(loginDto.email);
     if (!user) {
       throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST);
     }
+
+    const passwordMatches = await this.usersService.validatePassword(
+      loginDto.password,
+      user.password
+    );
+    if (!passwordMatches) {
+      throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST);
+    }
+
     const payload = { email: user.email, sub: user.uuid };
     const accessToken = this.jwtService.sign(payload);
     return {
       accessToken,
-      user,
+      userData: {
+        uuid: user.uuid,
+        email: user.email,
+        type: user.type,
+        userDetails: {
+          uuid: user.userDetails.uuid,
+          name: user.userDetails.name,
+          profileImageUrl: user.userDetails.profileImageUrl || "",
+        },
+      },
     };
   }
 
   async verifyToken(token: string) {
-    this.logger.log(`Token received in AuthService: ${token}`);
+    // this.logger.log(`Token received in AuthService: ${token}`);
     try {
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
-      this.logger.log(`Decoded token: ${JSON.stringify(decoded)}`);
+      // this.logger.log(`Decoded token: ${JSON.stringify(decoded)}`);
       return { isValid: true, decoded };
     } catch (error) {
-      this.logger.error(`Token verification failed: ${error.message}`);
+      // this.logger.error(`Token verification failed: ${error.message}`);
       throw new HttpException(
         "Invalid or expired token",
         HttpStatus.UNAUTHORIZED

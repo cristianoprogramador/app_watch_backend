@@ -70,8 +70,8 @@ export class AuthController {
   async verifyToken(@Req() request: Request) {
     const authHeader = request.headers["authorization"];
     const token = authHeader?.split(" ")[1] || "";
-    this.logger.log(`Authorization header: ${authHeader}`);
-    this.logger.log(`Token extracted: ${token}`);
+    // this.logger.log(`Authorization header: ${authHeader}`);
+    // this.logger.log(`Token extracted: ${token}`);
     return this.authService.verifyToken(token);
   }
 }

@@ -42,10 +42,10 @@ async function bootstrap() {
   const errorLogsService = app.get(ErrorLogsService);
   app.useGlobalFilters(new CustomExceptionFilter(errorLogsService));
 
-  app.use((req, res, next) => {
-    console.log("Headers:", req.headers);
-    next();
-  });
+  // app.use((req, res, next) => {
+  //   console.log("Headers:", req.headers);
+  //   next();
+  // });
 
   await app.listen(3000);
 }
