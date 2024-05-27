@@ -5,9 +5,23 @@ import { AppModule } from "./app.module";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { CustomExceptionFilter } from "./error-logs/custom-exception.filter";
 import { ErrorLogsService } from "./error-logs/error-logs.service";
+import * as express from "express";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors();
+  app.use(
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
+      res.header("Access-Control-Allow-Headers", "Content-Type, Accept");
+      next();
+    }
+  );
 
   const config = new DocumentBuilder()
     .setTitle("App Watch API")

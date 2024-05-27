@@ -44,6 +44,19 @@ export class UsersService {
     return await this.usersRepository.findAll(page, itemsPerPage, search);
   }
 
+  async findByUuid(uuid: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { uuid },
+      include: { userDetails: true },
+    });
+    if (!user) {
+      this.logger.warn(`No user found for UUID: ${uuid}`);
+      throw new HttpException("User not found", HttpStatus.NOT_FOUND);
+    }
+    this.logger.log(`User found for UUID: ${uuid}`);
+    return user;
+  }
+
   async update(uuid: string, updateUserDto: UpdateUserDto) {
     return this.usersRepository.update(uuid, updateUserDto);
   }

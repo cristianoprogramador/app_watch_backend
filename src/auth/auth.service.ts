@@ -107,19 +107,35 @@ export class AuthService {
   }
 
   async verifyToken(token: string) {
-    // this.logger.log(`Token received in AuthService: ${token}`);
     try {
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
-      // this.logger.log(`Decoded token: ${JSON.stringify(decoded)}`);
-      return { isValid: true, decoded };
+
+      const user = await this.usersService.findByUuid(decoded.sub);
+      if (!user) {
+        throw new HttpException("User not found", HttpStatus.NOT_FOUND);
+      }
+
+      return {
+        uuid: user.uuid,
+        email: user.email,
+        type: user.type,
+        userDetails: {
+          uuid: user.userDetails.uuid,
+          name: user.userDetails.name,
+          profileImageUrl: user.userDetails.profileImageUrl || "",
+        },
+      };
     } catch (error) {
-      // this.logger.error(`Token verification failed: ${error.message}`);
-      throw new HttpException(
-        "Invalid or expired token",
-        HttpStatus.UNAUTHORIZED
-      );
+      if (error.name === "TokenExpiredError") {
+        throw new HttpException("Expired token", HttpStatus.UNAUTHORIZED);
+      } else {
+        throw new HttpException(
+          "Invalid or expired token",
+          HttpStatus.UNAUTHORIZED
+        );
+      }
     }
   }
 }
