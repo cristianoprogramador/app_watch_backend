@@ -1,10 +1,26 @@
 // src/website-monitoring/website-monitoring.controller.ts
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
-import { ApiQuery, ApiTags, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiQuery,
+  ApiTags,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from "@nestjs/swagger";
 import { WebsiteMonitoringService } from "./website-monitoring.service";
 import { WebsiteStatusDto } from "./dto/website-status.dto";
 import { CheckWebsiteDto } from "./dto/website-monitoring.dto";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { CreateWebsiteDto } from "./dto/create-website.dto";
 
 @ApiTags("Website Monitoring")
 @UseGuards(JwtAuthGuard)
@@ -30,5 +46,51 @@ export class WebsiteMonitoringController {
   ): Promise<WebsiteStatusDto> {
     const { url, token } = query;
     return this.websiteMonitoringService.checkWebsite(url, token);
+  }
+
+  @Post()
+  @ApiBody({ type: CreateWebsiteDto })
+  @ApiResponse({ status: 201, description: "Website criado com sucesso" })
+  @ApiResponse({ status: 400, description: "Parâmetros inválidos" })
+  @ApiResponse({ status: 500, description: "Erro no servidor" })
+  async createWebsite(@Body() data: CreateWebsiteDto) {
+    return this.websiteMonitoringService.createWebsite(data);
+  }
+
+  @Get(":id")
+  @ApiResponse({ status: 200, description: "Detalhes do Website" })
+  @ApiResponse({ status: 404, description: "Website não encontrado" })
+  async findWebsiteById(@Param("id") id: string) {
+    return this.websiteMonitoringService.findWebsiteById(id);
+  }
+
+  @Delete(":id")
+  @ApiResponse({ status: 200, description: "Website deletado com sucesso" })
+  @ApiResponse({ status: 404, description: "Website não encontrado" })
+  async deleteWebsite(@Param("id") id: string) {
+    return this.websiteMonitoringService.deleteWebsite(id);
+  }
+
+  @Get("user/:userId")
+  @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
+  @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })
+  @ApiQuery({ name: "search", required: false, type: String })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de Websites do usuário",
+  })
+  @ApiResponse({ status: 404, description: "Usuário não encontrado" })
+  async findAllWebsitesByUserId(
+    @Param("userId") userId: string,
+    @Query("page") page: string,
+    @Query("itemsPerPage") itemsPerPage: string,
+    @Query("search") search?: string
+  ) {
+    return this.websiteMonitoringService.findAllWebsitesByUserId(
+      userId,
+      +page,
+      +itemsPerPage,
+      search
+    );
   }
 }
