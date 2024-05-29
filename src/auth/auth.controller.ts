@@ -18,6 +18,8 @@ import {
 } from "@nestjs/swagger";
 import { LoginDto } from "./dto/login.dto";
 import { Request } from "express";
+import { RequestResetPasswordDto } from "./dto/request-reset-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @ApiTags("Auth")
 @ApiBearerAuth()
@@ -73,5 +75,42 @@ export class AuthController {
     // this.logger.log(`Authorization header: ${authHeader}`);
     // this.logger.log(`Token extracted: ${token}`);
     return this.authService.verifyToken(token);
+  }
+
+  @Post("request-reset-password")
+  @ApiOperation({ summary: "Request password reset" })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: "Password reset email sent",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Bad request",
+  })
+  async requestResetPassword(
+    @Body() requestResetPasswordDto: RequestResetPasswordDto
+  ) {
+    return this.authService.requestResetPassword(requestResetPasswordDto.email);
+  }
+
+  @Post("reset-password")
+  @ApiOperation({ summary: "Reset password" })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: "Password reset successful",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Bad request",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Invalid or expired token",
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(
+      resetPasswordDto.token,
+      resetPasswordDto.password
+    );
   }
 }

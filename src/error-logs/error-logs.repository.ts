@@ -27,10 +27,18 @@ export class ErrorLogsRepository {
         }
       : {};
 
-    return this.prisma.errorLogs.findMany({
-      where,
-      skip,
-      take: itemsPerPage,
-    });
+    const [total, errorLogs] = await Promise.all([
+      this.prisma.errorLogs.count({ where }),
+      this.prisma.errorLogs.findMany({
+        where,
+        skip,
+        take: itemsPerPage,
+      }),
+    ]);
+
+    return {
+      total,
+      errorLogs,
+    };
   }
 }

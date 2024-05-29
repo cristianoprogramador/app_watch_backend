@@ -3,7 +3,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UsersRepository } from "./users.repository";
 import { PrismaService } from "src/prisma/prisma.service";
-import * as CryptoJS from "crypto-js";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UsersService {
@@ -15,11 +15,8 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const cipherText = CryptoJS.AES.encrypt(
-      createUserDto.password,
-      process.env.CRYPTO_SECRET
-    ).toString();
-    createUserDto.password = cipherText;
+    const hashedPassword = await this.encryptPassword(createUserDto.password);
+    createUserDto.password = hashedPassword;
     return this.usersRepository.create(createUserDto);
   }
 
@@ -83,19 +80,22 @@ export class UsersService {
     plainPassword: string,
     hashedPassword: string
   ): Promise<boolean> {
-    const bytes = CryptoJS.AES.decrypt(
-      hashedPassword,
-      process.env.CRYPTO_SECRET
-    );
-    const originalPassword = bytes.toString(CryptoJS.enc.Utf8);
-    return plainPassword === originalPassword;
+    return bcrypt.compare(plainPassword, hashedPassword);
   }
 
   async encryptPassword(password: string): Promise<string> {
-    const cipherText = CryptoJS.AES.encrypt(
-      password,
-      process.env.CRYPTO_SECRET
-    ).toString();
-    return cipherText;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    return hashedPassword;
+  }
+
+  async updatePassword(uuid: string, newPassword: string) {
+    console.log(newPassword);
+    const hashedPassword = await this.encryptPassword(newPassword);
+    console.log(hashedPassword);
+    await this.prisma.user.update({
+      where: { uuid },
+      data: { password: hashedPassword },
+    });
   }
 }

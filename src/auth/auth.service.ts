@@ -6,6 +6,9 @@ import { RegisterDto } from "./dto/register.dto";
 import { Prisma } from "@prisma/client";
 import { UserDetailsService } from "src/user-details/user-details.service";
 import { LoginDto } from "./dto/login.dto";
+import { MailerService } from "@nestjs-modules/mailer";
+import { sign, verify } from "jsonwebtoken";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthService {
@@ -14,7 +17,9 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private userDetailsService: UserDetailsService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private mailerService: MailerService,
+    private configService: ConfigService
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -136,6 +141,53 @@ export class AuthService {
           HttpStatus.UNAUTHORIZED
         );
       }
+    }
+  }
+
+  async requestResetPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new HttpException("User not found", HttpStatus.NOT_FOUND);
+    }
+
+    const secret = this.configService.get<string>("RESET_PASSWORD_SECRET");
+    const payload = { email: user.email, createdAt: new Date() };
+    const resetToken = sign(payload, secret, { expiresIn: "1h" });
+
+    const frontendUrl = this.configService.get<string>("FRONTEND_URL");
+    const resetPasswordUrl = `${frontendUrl}/recover-password?token=${resetToken}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: "Password Reset Request",
+      template: "reset-password",
+      context: {
+        name: user.userDetails.name,
+        url: resetPasswordUrl,
+      },
+    });
+
+    return { message: "Password reset email sent" };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const secret = this.configService.get<string>("RESET_PASSWORD_SECRET");
+    try {
+      const decoded = verify(token, secret) as { email: string };
+      const user = await this.usersService.findByEmail(decoded.email);
+
+      if (!user) {
+        throw new HttpException("Invalid token", HttpStatus.BAD_REQUEST);
+      }
+
+      await this.usersService.updatePassword(user.uuid, newPassword);
+
+      return { message: "Password reset successful" };
+    } catch (error) {
+      throw new HttpException(
+        "Invalid or expired token",
+        HttpStatus.BAD_REQUEST
+      );
     }
   }
 }

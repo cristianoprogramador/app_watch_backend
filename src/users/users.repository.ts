@@ -20,11 +20,19 @@ export class UsersRepository {
         }
       : {};
 
-    return this.prisma.user.findMany({
-      where,
-      skip,
-      take: itemsPerPage,
-    });
+    const [total, users] = await Promise.all([
+      this.prisma.user.count({ where }),
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: itemsPerPage,
+      }),
+    ]);
+
+    return {
+      total,
+      users,
+    };
   }
 
   async findOne(uuid: string) {
