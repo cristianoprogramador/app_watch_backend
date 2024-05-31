@@ -15,9 +15,34 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const hashedPassword = await this.encryptPassword(createUserDto.password);
-    createUserDto.password = hashedPassword;
-    return this.usersRepository.create(createUserDto);
+    const cipherText = createUserDto.password
+      ? await this.encryptPassword(createUserDto.password)
+      : null;
+
+    const user = await this.prisma.user.create({
+      data: {
+        ...createUserDto,
+        password: cipherText,
+      },
+      include: { userDetails: true },
+    });
+
+    return user;
+  }
+
+  async findByEmailGoogle(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { userDetails: true },
+    });
+
+    if (!user) {
+      this.logger.log(`No user found for email: ${email}`);
+      return null;
+    }
+
+    this.logger.log(`User found for email: ${email}`);
+    return user;
   }
 
   async findByEmail(email: string) {
@@ -90,9 +115,7 @@ export class UsersService {
   }
 
   async updatePassword(uuid: string, newPassword: string) {
-    console.log(newPassword);
     const hashedPassword = await this.encryptPassword(newPassword);
-    console.log(hashedPassword);
     await this.prisma.user.update({
       where: { uuid },
       data: { password: hashedPassword },

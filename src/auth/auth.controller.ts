@@ -15,11 +15,13 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiExcludeEndpoint,
 } from "@nestjs/swagger";
 import { LoginDto } from "./dto/login.dto";
 import { Request } from "express";
 import { RequestResetPasswordDto } from "./dto/request-reset-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { GoogleLoginDto } from "./dto/google-login.dto";
 
 @ApiTags("Auth")
 @ApiBearerAuth()
@@ -57,6 +59,12 @@ export class AuthController {
   })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post("google")
+  @ApiExcludeEndpoint()
+  async googleLogin(@Body() googleLoginDto: GoogleLoginDto) {
+    return this.authService.googleLogin(googleLoginDto);
   }
 
   @Get("verify-token")

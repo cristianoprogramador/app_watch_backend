@@ -11,6 +11,7 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
 import { join } from "path";
+import { OAuth2Client } from "google-auth-library";
 
 @Module({
   imports: [
@@ -51,7 +52,17 @@ import { join } from "path";
     ConfigModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    {
+      provide: OAuth2Client,
+      useFactory: (configService: ConfigService) => {
+        return new OAuth2Client(configService.get<string>("GOOGLE_CLIENT_ID"));
+      },
+      inject: [ConfigService],
+    },
+  ],
   exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

@@ -9,10 +9,15 @@ import { LoginDto } from "./dto/login.dto";
 import { MailerService } from "@nestjs-modules/mailer";
 import { sign, verify } from "jsonwebtoken";
 import { ConfigService } from "@nestjs/config";
+import { OAuth2Client } from "google-auth-library";
+import { GoogleLoginDto } from "./dto/google-login.dto";
+import axios from "axios";
+import { randomBytes } from "crypto";
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly oAuth2Client: OAuth2Client;
 
   constructor(
     private usersService: UsersService,
@@ -20,7 +25,11 @@ export class AuthService {
     private jwtService: JwtService,
     private mailerService: MailerService,
     private configService: ConfigService
-  ) {}
+  ) {
+    this.oAuth2Client = new OAuth2Client(
+      configService.get<string>("GOOGLE_CLIENT_ID")
+    );
+  }
 
   async register(registerDto: RegisterDto) {
     try {
@@ -96,6 +105,57 @@ export class AuthService {
 
     const payload = { email: user.email, sub: user.uuid };
     const accessToken = this.jwtService.sign(payload);
+    return {
+      accessToken,
+      userData: {
+        uuid: user.uuid,
+        email: user.email,
+        type: user.type,
+        userDetails: {
+          uuid: user.userDetails.uuid,
+          name: user.userDetails.name,
+          profileImageUrl: user.userDetails.profileImageUrl || "",
+        },
+      },
+    };
+  }
+
+  async googleLogin(googleLoginDto: GoogleLoginDto) {
+    const response = await axios.get(
+      `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleLoginDto.token}`
+    );
+
+    const payload = response.data;
+
+    if (!payload || !payload.verified_email) {
+      throw new HttpException("Invalid Google token", HttpStatus.UNAUTHORIZED);
+    }
+
+    let user = await this.usersService.findByEmailGoogle(payload.email);
+    if (!user) {
+      const userDetails = await this.userDetailsService.create({
+        name: payload.name || "",
+        email: payload.email,
+        typeDocument: null,
+        document: null,
+      });
+
+      const randomPassword = randomBytes(16).toString("hex");
+      const hashedPassword =
+        await this.usersService.encryptPassword(randomPassword);
+
+      user = await this.usersService.create({
+        email: payload.email,
+        password: hashedPassword,
+        userDetailsUuid: userDetails.uuid,
+        type: "client",
+      });
+    }
+
+    const accessToken = this.jwtService.sign({
+      email: user.email,
+      sub: user.uuid,
+    });
     return {
       accessToken,
       userData: {
