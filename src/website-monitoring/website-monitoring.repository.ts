@@ -27,6 +27,12 @@ export class WebsiteMonitoringRepository {
     });
   }
 
+  async findAllWebsites(): Promise<any[]> {
+    return this.prisma.website.findMany({
+      include: { routes: true },
+    });
+  }
+
   async findAllWebsitesByUserId(
     userId: string,
     page: number,

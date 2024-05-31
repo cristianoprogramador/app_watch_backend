@@ -134,10 +134,11 @@ export class AuthService {
     let user = await this.usersService.findByEmailGoogle(payload.email);
     if (!user) {
       const userDetails = await this.userDetailsService.create({
-        name: payload.name || "",
+        name: payload.given_name || "",
         email: payload.email,
         typeDocument: null,
         document: null,
+        profileImageUrl: payload.picture,
       });
 
       const randomPassword = randomBytes(16).toString("hex");

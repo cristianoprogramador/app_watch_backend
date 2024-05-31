@@ -35,11 +35,13 @@ export class CreateWebsiteDto {
   @ApiProperty({
     type: [CreateRouteDto],
     description: "Rotas associadas ao site",
+    required: false,
   })
   @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CreateRouteDto)
-  routes: CreateRouteDto[];
+  routes: CreateRouteDto[] = [];
 
   @ApiProperty({ example: "user-uuid", description: "ID do usuário" })
   @IsUUID()
