@@ -1,10 +1,13 @@
+// src\website-monitoring\website-monitoring.service.ts
+
 import { Injectable, Logger } from "@nestjs/common";
 import { WebsiteStatusDto } from "./dto/website-status.dto";
 import { WebsiteMonitoringRepository } from "./website-monitoring.repository";
 import { CreateWebsiteDto } from "./dto/create-website.dto";
-import { Prisma } from "@prisma/client";
+import { HttpMethod } from "./dto/create-route.dto";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { WebsiteMonitoringGateway } from "./website-monitoring.gateway";
+import { UpdateWebsiteDto } from "./dto/update-website.dto";
 
 @Injectable()
 export class WebsiteMonitoringService {
@@ -22,6 +25,7 @@ export class WebsiteMonitoringService {
     const websites = await this.repository.findAllWebsites();
     for (const website of websites) {
       const status = await this.checkWebsite(website.url, website.token);
+      await this.repository.updateSiteStatus(website.uuid, status.status);
       this.gateway.sendStatusUpdate(website.userId, {
         siteUuid: website.uuid,
         name: website.name,
@@ -41,25 +45,39 @@ export class WebsiteMonitoringService {
     }
   }
 
+  async deleteRoute(routeId: string): Promise<void> {
+    return this.repository.deleteRoute(routeId);
+  }
+
   async createWebsite(data: CreateWebsiteDto) {
-    const websiteData: Prisma.WebsiteCreateInput = {
-      name: data.siteName,
-      url: data.siteUrl,
+    const website = await this.repository.createWebsite({
+      name: data.name,
+      url: data.url,
       token: data.token,
-      user: {
-        connect: { uuid: data.userId },
+      user: { connect: { uuid: data.userId } },
+      routes: {
+        create: data.routes.map((route) => ({
+          method: route.method as HttpMethod,
+          route: route.route,
+          body: route.body,
+        })),
       },
-      routes: data.routes?.length
-        ? {
-            create: data.routes.map((route) => ({
-              method: route.method,
-              path: route.route,
-              body: route.body,
-            })),
-          }
-        : undefined,
-    };
-    return this.repository.createWebsite(websiteData);
+    });
+
+    const initialStatus = await this.checkWebsite(data.url, data.token);
+
+    await this.repository.createSiteStatus({
+      siteId: website.uuid,
+      status: initialStatus.status,
+      lastChecked: new Date(),
+    });
+
+    this.gateway.sendStatusUpdate(data.userId, {
+      siteUuid: website.uuid,
+      status: initialStatus.status,
+    });
+
+    return website;
   }
 
   async findWebsiteById(id: string) {
@@ -68,6 +86,18 @@ export class WebsiteMonitoringService {
 
   async deleteWebsite(id: string) {
     return this.repository.deleteWebsite(id);
+  }
+
+  async updateWebsite(id: string, data: UpdateWebsiteDto): Promise<any> {
+    const website = await this.repository.updateWebsite(id, data);
+    if (website) {
+      this.gateway.sendStatusUpdate(website.userId, {
+        siteUuid: website.uuid,
+        name: website.name,
+        status: website.siteStatus.status,
+      });
+    }
+    return website;
   }
 
   async findAllWebsitesByUserId(

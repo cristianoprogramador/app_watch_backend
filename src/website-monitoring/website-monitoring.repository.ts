@@ -2,6 +2,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
+import { UpdateWebsiteDto } from "./dto/update-website.dto";
 
 @Injectable()
 export class WebsiteMonitoringRepository {
@@ -62,7 +63,7 @@ export class WebsiteMonitoringRepository {
         where,
         skip,
         take,
-        include: { routes: true },
+        include: { routes: true, siteStatus: true },
       }),
     ]);
 
@@ -70,5 +71,79 @@ export class WebsiteMonitoringRepository {
       total,
       websites,
     };
+  }
+
+  async updateSiteStatus(siteId: string, status: string): Promise<void> {
+    await this.prisma.siteStatus.upsert({
+      where: { siteId },
+      update: {
+        status: status,
+        lastChecked: new Date(),
+      },
+      create: {
+        siteId: siteId,
+        status: status,
+        lastChecked: new Date(),
+      },
+    });
+  }
+
+  async updateWebsite(uuid: string, data: UpdateWebsiteDto): Promise<any> {
+    const { routes, ...updateData } = data;
+
+    const existingRoutes = routes.filter((route) => route.uuid);
+    const newRoutes = routes.filter((route) => !route.uuid);
+
+    const updateOps = existingRoutes.map((route) => ({
+      where: { uuid: route.uuid },
+      update: {
+        method: route.method,
+        route: route.route,
+        body: route.body || undefined,
+      },
+      create: {
+        method: route.method,
+        route: route.route,
+        body: route.body || undefined,
+      },
+    }));
+
+    return this.prisma.website.update({
+      where: { uuid },
+      data: {
+        ...updateData,
+        ...(routes && {
+          routes: {
+            upsert: updateOps,
+            create: newRoutes.map((route) => ({
+              method: route.method,
+              route: route.route,
+              body: route.body || undefined,
+            })),
+          },
+        }),
+      },
+      include: { routes: true, siteStatus: true },
+    });
+  }
+
+  async createSiteStatus(data: {
+    siteId: string;
+    status: string;
+    lastChecked: Date;
+  }) {
+    return this.prisma.siteStatus.create({
+      data: {
+        siteId: data.siteId,
+        status: data.status,
+        lastChecked: data.lastChecked,
+      },
+    });
+  }
+
+  async deleteRoute(routeId: string): Promise<void> {
+    await this.prisma.route.delete({
+      where: { uuid: routeId },
+    });
   }
 }

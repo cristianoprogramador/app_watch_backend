@@ -2,7 +2,7 @@
 import { IsString, IsEnum, IsOptional } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
-enum HttpMethod {
+export enum HttpMethod {
   GET = "GET",
   POST = "POST",
   PUT = "PUT",

@@ -14,14 +14,14 @@ import { CreateRouteDto } from "./create-route.dto";
 export class CreateWebsiteDto {
   @ApiProperty({ example: "google", description: "Nome do site" })
   @IsString()
-  siteName: string;
+  name: string;
 
   @ApiProperty({
     example: "https://google.com.br/",
     description: "URL do site",
   })
   @IsUrl()
-  siteUrl: string;
+  url: string;
 
   @ApiProperty({
     example: "aosidjo1i2j31oiwkjdo",

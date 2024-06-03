@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -21,6 +22,7 @@ import { WebsiteStatusDto } from "./dto/website-status.dto";
 import { CheckWebsiteDto } from "./dto/website-monitoring.dto";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { CreateWebsiteDto } from "./dto/create-website.dto";
+import { UpdateWebsiteDto } from "./dto/update-website.dto";
 
 @ApiTags("Website Monitoring")
 @UseGuards(JwtAuthGuard)
@@ -69,6 +71,20 @@ export class WebsiteMonitoringController {
   @ApiResponse({ status: 404, description: "Website não encontrado" })
   async deleteWebsite(@Param("id") id: string) {
     return this.websiteMonitoringService.deleteWebsite(id);
+  }
+
+  @Patch(":id")
+  @ApiBody({ type: UpdateWebsiteDto })
+  @ApiResponse({ status: 200, description: "Website atualizado com sucesso" })
+  @ApiResponse({ status: 400, description: "Parâmetros inválidos" })
+  @ApiResponse({ status: 404, description: "Website não encontrado" })
+  async updateWebsite(@Param("id") id: string, @Body() data: UpdateWebsiteDto) {
+    return this.websiteMonitoringService.updateWebsite(id, data);
+  }
+
+  @Delete("routes/:routeId")
+  async deleteRoute(@Param("routeId") routeId: string) {
+    return this.websiteMonitoringService.deleteRoute(routeId);
   }
 
   @Get("user/:userId")
