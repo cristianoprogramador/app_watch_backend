@@ -4,33 +4,29 @@ import { WebsiteMonitoringRepository } from "./website-monitoring.repository";
 import { CreateWebsiteDto } from "./dto/create-website.dto";
 import { Prisma } from "@prisma/client";
 import { Cron, CronExpression } from "@nestjs/schedule";
+import { WebsiteMonitoringGateway } from "./website-monitoring.gateway";
 
 @Injectable()
 export class WebsiteMonitoringService {
   private readonly logger = new Logger(WebsiteMonitoringService.name);
-  private activeTasks = 0;
-  private maxConcurrentTasks = 5;
 
-  constructor(private repository: WebsiteMonitoringRepository) {}
+  constructor(
+    private repository: WebsiteMonitoringRepository,
+    private gateway: WebsiteMonitoringGateway
+  ) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async checkAllWebsites(): Promise<void> {
     this.logger.debug("Checking all websites");
     const websites = await this.repository.findAllWebsites();
-
     for (const website of websites) {
-      if (this.activeTasks < this.maxConcurrentTasks) {
-        this.activeTasks++;
-        this.checkWebsite(website.url, website.token)
-          .then((status) => {
-            this.logger.debug(
-              `Website ${website.name} is currently ${status.status}`
-            );
-          })
-          .finally(() => {
-            this.activeTasks--;
-          });
-      }
+      const status = await this.checkWebsite(website.url, website.token);
+      this.gateway.sendStatusUpdate(website.userId, {
+        siteUuid: website.uuid,
+        name: website.name,
+        status: status.status,
+      });
     }
   }
 

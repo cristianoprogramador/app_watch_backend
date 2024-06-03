@@ -40,6 +40,12 @@ export class WebsiteMonitoringRepository {
     search?: string
   ) {
     const skip = (page - 1) * itemsPerPage;
+    const take = itemsPerPage;
+
+    if (isNaN(skip) || isNaN(take)) {
+      throw new Error("Invalid pagination parameters");
+    }
+
     const where: Prisma.WebsiteWhereInput = {
       userId,
       ...(search && {
@@ -55,7 +61,7 @@ export class WebsiteMonitoringRepository {
       this.prisma.website.findMany({
         where,
         skip,
-        take: itemsPerPage,
+        take,
         include: { routes: true },
       }),
     ]);

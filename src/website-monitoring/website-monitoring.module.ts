@@ -6,6 +6,7 @@ import { WebsiteMonitoringController } from "./website-monitoring.controller";
 import { WebsiteMonitoringRepository } from "./website-monitoring.repository";
 import { PrismaService } from "src/prisma/prisma.service";
 import { ScheduleModule } from "@nestjs/schedule";
+import { WebsiteMonitoringGateway } from "./website-monitoring.gateway";
 
 @Module({
   imports: [HttpModule, ScheduleModule.forRoot()],
@@ -13,6 +14,7 @@ import { ScheduleModule } from "@nestjs/schedule";
     WebsiteMonitoringService,
     WebsiteMonitoringRepository,
     PrismaService,
+    WebsiteMonitoringGateway,
   ],
   controllers: [WebsiteMonitoringController],
 })
