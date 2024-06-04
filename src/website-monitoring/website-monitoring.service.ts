@@ -8,6 +8,7 @@ import { HttpMethod } from "./dto/create-route.dto";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { WebsiteMonitoringGateway } from "./website-monitoring.gateway";
 import { UpdateWebsiteDto } from "./dto/update-website.dto";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class WebsiteMonitoringService {
@@ -15,11 +16,12 @@ export class WebsiteMonitoringService {
 
   constructor(
     private repository: WebsiteMonitoringRepository,
-    private gateway: WebsiteMonitoringGateway
+    private gateway: WebsiteMonitoringGateway,
+    private prisma: PrismaService
   ) {}
 
   // @Cron(CronExpression.EVERY_10_SECONDS)
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async checkAllWebsites(): Promise<void> {
     this.logger.debug("Checking all websites");
     const websites = await this.repository.findAllWebsites();
@@ -85,6 +87,19 @@ export class WebsiteMonitoringService {
   }
 
   async deleteWebsite(id: string) {
+    const website = await this.findWebsiteById(id);
+    if (!website) {
+      throw new Error(`Site com ID ${id} não encontrado`);
+    }
+
+    await this.prisma.siteStatus.deleteMany({
+      where: { siteId: website.uuid },
+    });
+
+    for (const route of website.routes) {
+      await this.deleteRoute(route.uuid);
+    }
+
     return this.repository.deleteWebsite(id);
   }
 
