@@ -9,6 +9,7 @@ import { Cron, CronExpression } from "@nestjs/schedule";
 import { WebsiteMonitoringGateway } from "./website-monitoring.gateway";
 import { UpdateWebsiteDto } from "./dto/update-website.dto";
 import { PrismaService } from "src/prisma/prisma.service";
+import axios from "axios";
 
 @Injectable()
 export class WebsiteMonitoringService {
@@ -22,15 +23,33 @@ export class WebsiteMonitoringService {
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async checkAllWebsites(): Promise<void> {
-    this.logger.debug("Checking all websites");
+    this.logger.debug("Checking all websites and routes");
     const websites = await this.repository.findAllWebsites();
     for (const website of websites) {
-      const status = await this.checkWebsite(website.url, website.token);
-      await this.repository.updateSiteStatus(website.uuid, status.status);
+      const siteStatus = await this.checkWebsite(website.url, website.token);
+      await this.repository.updateSiteStatus(website.uuid, siteStatus.status);
+
+      const routesStatus = [];
+      for (const route of website.routes) {
+        const routeStatus = await this.checkRoute(route, website.token);
+        await this.repository.createOrUpdateRouteStatus({
+          routeId: route.uuid,
+          status: routeStatus.status,
+          response: routeStatus.response,
+        });
+        routesStatus.push({
+          routeId: route.uuid,
+          route: route.route,
+          status: routeStatus.status,
+          response: routeStatus.response,
+        });
+      }
+
       this.gateway.sendStatusUpdate(website.userId, {
         siteUuid: website.uuid,
         name: website.name,
-        status: status.status,
+        status: siteStatus.status,
+        routes: routesStatus,
       });
     }
   }
@@ -43,6 +62,36 @@ export class WebsiteMonitoringService {
       return { status: response.ok ? "online" : "offline" };
     } catch (error) {
       return { status: "offline" };
+    }
+  }
+
+  async checkRoute(
+    route,
+    token?: string
+  ): Promise<{ status: string; response: string }> {
+    try {
+      const baseUrl = route.website.url.endsWith("/")
+        ? route.website.url.slice(0, -1)
+        : route.website.url;
+
+      const routePath = route.route.startsWith("/")
+        ? route.route
+        : `/${route.route}`;
+
+      const fullUrl = `${baseUrl}${routePath}`;
+
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios({
+        method: route.method,
+        url: fullUrl,
+        data: route.body ? JSON.parse(route.body) : undefined,
+        headers,
+      });
+
+      return { status: "success", response: JSON.stringify(response.data) };
+    } catch (error) {
+      console.error("Error checking route:", error);
+      return { status: "failure", response: error.message };
     }
   }
 
@@ -126,5 +175,41 @@ export class WebsiteMonitoringService {
       itemsPerPage,
       search
     );
+  }
+
+  async updateWebsiteStatus(siteId: string): Promise<void> {
+    const website = await this.repository.findWebsiteById(siteId);
+    if (!website) {
+      throw new Error(`Site com ID ${siteId} não encontrado`);
+    }
+
+    const siteStatus = await this.checkWebsite(website.url, website.token);
+    await this.repository.updateSiteStatus(website.uuid, siteStatus.status);
+
+    const routesStatus = [];
+    for (const route of website.routes) {
+      const routeStatus = await this.checkRoute(
+        { ...route, website },
+        website.token
+      );
+      await this.repository.createOrUpdateRouteStatus({
+        routeId: route.uuid,
+        status: routeStatus.status,
+        response: routeStatus.response,
+      });
+      routesStatus.push({
+        routeId: route.uuid,
+        route: route.route,
+        status: routeStatus.status,
+        response: routeStatus.response,
+      });
+    }
+
+    this.gateway.sendStatusUpdate(website.userId, {
+      siteUuid: website.uuid,
+      name: website.name,
+      status: siteStatus.status,
+      routes: routesStatus,
+    });
   }
 }

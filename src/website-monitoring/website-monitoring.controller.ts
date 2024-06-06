@@ -87,6 +87,16 @@ export class WebsiteMonitoringController {
     return this.websiteMonitoringService.deleteRoute(routeId);
   }
 
+  @Post("update-status/:id")
+  @ApiResponse({
+    status: 200,
+    description: "Status do site atualizado com sucesso",
+  })
+  @ApiResponse({ status: 404, description: "Site não encontrado" })
+  async updateWebsiteStatus(@Param("id") id: string): Promise<void> {
+    return this.websiteMonitoringService.updateWebsiteStatus(id);
+  }
+
   @Get("user/:userId")
   @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
   @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })

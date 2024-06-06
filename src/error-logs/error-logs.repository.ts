@@ -33,6 +33,7 @@ export class ErrorLogsRepository {
         where,
         skip,
         take: itemsPerPage,
+        orderBy: { createdAt: "desc" },
       }),
     ]);
 

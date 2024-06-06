@@ -30,7 +30,14 @@ export class WebsiteMonitoringRepository {
 
   async findAllWebsites(): Promise<any[]> {
     return this.prisma.website.findMany({
-      include: { routes: true },
+      include: {
+        routes: {
+          include: {
+            website: true,
+          },
+        },
+        siteStatus: true,
+      },
     });
   }
 
@@ -63,13 +70,29 @@ export class WebsiteMonitoringRepository {
         where,
         skip,
         take,
-        include: { routes: true, siteStatus: true },
+        include: {
+          routes: {
+            include: {
+              routeStatus: true,
+            },
+          },
+          siteStatus: true,
+        },
       }),
     ]);
 
+    const transformedWebsites = websites.map((website) => ({
+      ...website,
+      routes: website.routes.map((route) => ({
+        ...route,
+        status: route.routeStatus?.status || "unknown",
+        response: route.routeStatus?.response || "",
+      })),
+    }));
+
     return {
       total,
-      websites,
+      websites: transformedWebsites,
     };
   }
 
@@ -84,6 +107,27 @@ export class WebsiteMonitoringRepository {
         siteId: siteId,
         status: status,
         lastChecked: new Date(),
+      },
+    });
+  }
+
+  async createOrUpdateRouteStatus(data: {
+    routeId: string;
+    status: string;
+    response?: string;
+  }): Promise<void> {
+    await this.prisma.routeStatus.upsert({
+      where: { routeId: data.routeId },
+      update: {
+        status: data.status,
+        response: data.response,
+        checkedAt: new Date(),
+      },
+      create: {
+        routeId: data.routeId,
+        status: data.status,
+        response: data.response,
+        checkedAt: new Date(),
       },
     });
   }
@@ -141,7 +185,26 @@ export class WebsiteMonitoringRepository {
     });
   }
 
+  async createRouteStatus(data: {
+    routeId: string;
+    status: string;
+    response?: string;
+  }): Promise<void> {
+    await this.prisma.routeStatus.create({
+      data: {
+        routeId: data.routeId,
+        status: data.status,
+        response: data.response,
+        checkedAt: new Date(),
+      },
+    });
+  }
+
   async deleteRoute(routeId: string): Promise<void> {
+    await this.prisma.routeStatus.deleteMany({
+      where: { routeId },
+    });
+
     await this.prisma.route.delete({
       where: { uuid: routeId },
     });

@@ -100,9 +100,10 @@ model Route {
   route     String  @db.Text()
   body      String? @db.Text()
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  routeStatus RouteStatus?
 
   @@map("routes")
 }
@@ -116,4 +117,16 @@ model SiteStatus {
   site Website @relation(fields: [siteId], references: [uuid])
 
   @@map("site_statuses")
+}
+
+model RouteStatus {
+  uuid      String   @id @default(uuid()) @db.Uuid
+  routeId   String   @unique @db.Uuid
+  status    String
+  response  String?  @db.Text()
+  checkedAt DateTime @default(now())
+
+  route Route @relation(fields: [routeId], references: [uuid])
+
+  @@map("route_statuses")
 }
