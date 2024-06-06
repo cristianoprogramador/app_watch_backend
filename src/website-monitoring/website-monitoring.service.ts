@@ -20,7 +20,6 @@ export class WebsiteMonitoringService {
     private prisma: PrismaService
   ) {}
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
   @Cron(CronExpression.EVERY_30_MINUTES)
   async checkAllWebsites(): Promise<void> {
     this.logger.debug("Checking all websites");

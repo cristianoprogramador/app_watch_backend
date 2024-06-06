@@ -16,7 +16,7 @@ export class UsersRepository {
     const skip = (page - 1) * itemsPerPage;
     const where = search
       ? {
-          OR: [{ name: { contains: search } }, { email: { contains: search } }],
+          OR: [{ email: { contains: search } }],
         }
       : {};
 
@@ -26,6 +26,14 @@ export class UsersRepository {
         where,
         skip,
         take: itemsPerPage,
+        select: {
+          uuid: true,
+          email: true,
+          type: true,
+          userDetailsUuid: true,
+          createdAt: true,
+          disabled: true,
+        },
       }),
     ]);
 
