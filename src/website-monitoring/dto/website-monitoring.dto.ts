@@ -1,4 +1,4 @@
-// src/website-monitoring/dto/check-website.dto.ts
+// src\website-monitoring\dto\website-monitoring.dto.ts
 import { IsOptional, IsString, IsUrl } from "class-validator";
 
 export class CheckWebsiteDto {

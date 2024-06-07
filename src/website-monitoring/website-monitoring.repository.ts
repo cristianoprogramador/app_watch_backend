@@ -97,7 +97,7 @@ export class WebsiteMonitoringRepository {
   }
 
   async updateSiteStatus(siteId: string, status: string): Promise<void> {
-    await this.prisma.siteStatus.upsert({
+    await this.prisma.siteCheck.upsert({
       where: { siteId },
       update: {
         status: status,
@@ -116,7 +116,7 @@ export class WebsiteMonitoringRepository {
     status: string;
     response?: string;
   }): Promise<void> {
-    await this.prisma.routeStatus.upsert({
+    await this.prisma.routeCheck.upsert({
       where: { routeId: data.routeId },
       update: {
         status: data.status,
@@ -176,7 +176,7 @@ export class WebsiteMonitoringRepository {
     status: string;
     lastChecked: Date;
   }) {
-    return this.prisma.siteStatus.create({
+    return this.prisma.siteCheck.create({
       data: {
         siteId: data.siteId,
         status: data.status,
@@ -190,7 +190,7 @@ export class WebsiteMonitoringRepository {
     status: string;
     response?: string;
   }): Promise<void> {
-    await this.prisma.routeStatus.create({
+    await this.prisma.routeCheck.create({
       data: {
         routeId: data.routeId,
         status: data.status,
@@ -201,7 +201,7 @@ export class WebsiteMonitoringRepository {
   }
 
   async deleteRoute(routeId: string): Promise<void> {
-    await this.prisma.routeStatus.deleteMany({
+    await this.prisma.routeCheck.deleteMany({
       where: { routeId },
     });
 

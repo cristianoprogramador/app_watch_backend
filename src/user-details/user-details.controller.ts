@@ -16,7 +16,6 @@ import {
 import {
   ApiBearerAuth,
   ApiExcludeEndpoint,
-  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -27,6 +26,7 @@ import { UserDetailsService } from "./user-details.service";
 import { CreateUserDetailsDto } from "./dto/create-user-details.dto";
 import { UpdateUserDetailsDto } from "./dto/update-user-details.dto";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { UserDetails } from "@prisma/client";
 
 @ApiTags("UserDetails")
 @UseGuards(JwtAuthGuard)
@@ -42,6 +42,7 @@ export class UserDetailsController {
   }
 
   @Get("list")
+  @ApiOperation({ summary: "List user details" })
   @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
   @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })
   @ApiQuery({ name: "search", required: false, type: String })
@@ -49,39 +50,40 @@ export class UserDetailsController {
     @Query("page") page: string,
     @Query("itemsPerPage") itemsPerPage: string,
     @Query("search") search?: string
-  ) {
+  ): Promise<UserDetails[]> {
     return this.userDetailsService.findAll(+page, +itemsPerPage, search);
   }
 
   @Get(":uuid")
-  @ApiOperation({ summary: "Find a user-details by UUID" })
-  findOne(@Param("uuid", UuidValidationPipe) uuid: string) {
+  @ApiOperation({ summary: "Find user details by UUID" })
+  findOne(
+    @Param("uuid", UuidValidationPipe) uuid: string
+  ): Promise<UserDetails> {
     return this.userDetailsService.findOne(uuid);
   }
 
   @Put(":uuid")
-  @ApiOperation({ summary: "Update a person" })
+  @ApiOperation({ summary: "Update user details" })
   @ApiParam({
     name: "uuid",
-    description: "Unique identifier of the person to update",
+    description: "Unique identifier of the user details to update",
   })
-  @ApiOkResponse({ description: "Person has been updated" })
   update(
     @Param("uuid") uuid: string,
     @Body() updateUserDetailsDto: UpdateUserDetailsDto
-  ) {
+  ): Promise<UserDetails> {
     return this.userDetailsService.update(uuid, updateUserDetailsDto);
   }
 
   @Delete(":uuid")
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: "Delete a person by UUID" })
+  @ApiOperation({ summary: "Delete user details by UUID" })
   @ApiParam({
     name: "uuid",
     required: true,
-    description: "Unique identifier of the person to delete",
+    description: "Unique identifier of the user details to delete",
   })
-  remove(@Param("uuid") uuid: string) {
+  remove(@Param("uuid", UuidValidationPipe) uuid: string): Promise<void> {
     return this.userDetailsService.remove(uuid);
   }
 }

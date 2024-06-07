@@ -23,7 +23,7 @@ export class WebsiteMonitoringService {
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async checkAllWebsites(): Promise<void> {
-    this.logger.debug("Checking all websites and routes");
+    // this.logger.debug("Checking all websites and routes");
     const websites = await this.repository.findAllWebsites();
     for (const website of websites) {
       const siteStatus = await this.checkWebsite(website.url, website.token);
@@ -90,7 +90,7 @@ export class WebsiteMonitoringService {
 
       return { status: "success", response: JSON.stringify(response.data) };
     } catch (error) {
-      console.error("Error checking route:", error);
+      // console.error("Error checking route:", error);
       return { status: "failure", response: error.message };
     }
   }
@@ -140,7 +140,7 @@ export class WebsiteMonitoringService {
       throw new Error(`Site com ID ${id} não encontrado`);
     }
 
-    await this.prisma.siteStatus.deleteMany({
+    await this.prisma.siteCheck.deleteMany({
       where: { siteId: website.uuid },
     });
 

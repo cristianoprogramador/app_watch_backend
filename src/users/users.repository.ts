@@ -26,6 +26,7 @@ export class UsersRepository {
         where,
         skip,
         take: itemsPerPage,
+        orderBy: { createdAt: "desc" },
         select: {
           uuid: true,
           email: true,

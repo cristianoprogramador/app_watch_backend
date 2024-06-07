@@ -39,10 +39,13 @@ export class AuthController {
     type: RegisterDto,
   })
   @ApiResponse({
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     description: "Bad request, e.g., email or document already exists.",
   })
-  @ApiResponse({ status: 500, description: "Internal server error." })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: "Internal server error.",
+  })
   registerNewClient(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
@@ -54,7 +57,7 @@ export class AuthController {
     description: "Login successful",
   })
   @ApiResponse({
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     description: "Invalid credentials",
   })
   async login(@Body() loginDto: LoginDto) {
@@ -74,14 +77,12 @@ export class AuthController {
     description: "Token is valid",
   })
   @ApiResponse({
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     description: "Invalid or expired token",
   })
   async verifyToken(@Req() request: Request) {
     const authHeader = request.headers["authorization"];
     const token = authHeader?.split(" ")[1] || "";
-    // this.logger.log(`Authorization header: ${authHeader}`);
-    // this.logger.log(`Token extracted: ${token}`);
     return this.authService.verifyToken(token);
   }
 
@@ -92,7 +93,7 @@ export class AuthController {
     description: "Password reset email sent",
   })
   @ApiResponse({
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     description: "Bad request",
   })
   async requestResetPassword(
@@ -108,11 +109,11 @@ export class AuthController {
     description: "Password reset successful",
   })
   @ApiResponse({
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     description: "Bad request",
   })
   @ApiResponse({
-    status: 401,
+    status: HttpStatus.UNAUTHORIZED,
     description: "Invalid or expired token",
   })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {

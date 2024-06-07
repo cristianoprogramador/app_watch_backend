@@ -19,6 +19,6 @@ export class AppController {
   @Get("swagger-json")
   @ApiExcludeEndpoint()
   getSwaggerJson(@Res() res: Response): void {
-    res.sendFile(join(__dirname, "../swagger.json")); // Ajuste o caminho conforme necessário
+    res.sendFile(join(__dirname, "../swagger.json"));
   }
 }
