@@ -13,6 +13,8 @@ import { OAuth2Client } from "google-auth-library";
 import { GoogleLoginDto } from "./dto/google-login.dto";
 import axios from "axios";
 import { randomBytes } from "crypto";
+import { I18nService } from "src/i18n/i18n.service";
+import { Lang } from "src/common/decorators/lang.decorator";
 
 @Injectable()
 export class AuthService {
@@ -24,14 +26,15 @@ export class AuthService {
     private userDetailsService: UserDetailsService,
     private jwtService: JwtService,
     private mailerService: MailerService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private i18nService: I18nService
   ) {
     this.oAuth2Client = new OAuth2Client(
       configService.get<string>("GOOGLE_CLIENT_ID")
     );
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, @Lang() lang: string) {
     try {
       const userDetails = await this.userDetailsService.create({
         name: registerDto.name,
@@ -71,28 +74,31 @@ export class AuthService {
         if (error.meta && Array.isArray(error.meta.target)) {
           if (error.meta.target.includes("email")) {
             throw new HttpException(
-              "Email already exists.",
+              this.i18nService.get("authService.email_already_exists", lang),
               HttpStatus.BAD_REQUEST
             );
           } else if (error.meta.target.includes("document")) {
             throw new HttpException(
-              "Document already exists.",
+              this.i18nService.get("authService.document_already_exists", lang),
               HttpStatus.BAD_REQUEST
             );
           }
         }
       }
       throw new HttpException(
-        "Internal server error",
+        this.i18nService.get("authService.internal_server_error", lang),
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, @Lang() lang: string) {
     const user = await this.usersService.findByEmail(loginDto.email);
     if (!user) {
-      throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        this.i18nService.get("authService.invalid_credentials", lang),
+        HttpStatus.BAD_REQUEST
+      );
     }
 
     const passwordMatches = await this.usersService.validatePassword(
@@ -100,7 +106,10 @@ export class AuthService {
       user.password
     );
     if (!passwordMatches) {
-      throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        this.i18nService.get("authService.invalid_credentials", lang),
+        HttpStatus.BAD_REQUEST
+      );
     }
 
     const payload = { email: user.email, sub: user.uuid };

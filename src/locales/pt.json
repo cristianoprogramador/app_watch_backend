@@ -1,0 +1,14 @@
+{
+  "authService": {
+    "email_already_exists": "Este email já está registrado.",
+    "document_already_exists": "Este documento já está registrado.",
+    "internal_server_error": "Erro interno do servidor.",
+    "invalid_credentials": "Credenciais inválidas.",
+    "user_not_found": "Usuário não encontrado.",
+    "password_reset_email_sent": "Email de redefinição de senha enviado.",
+    "password_reset_successful": "Redefinição de senha bem-sucedida.",
+    "invalid_or_expired_token": "Token inválido ou expirado.",
+    "invalid_google_token": "Token do Google inválido.",
+    "expired_token": "Token expirado."
+  }
+}

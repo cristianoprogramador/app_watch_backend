@@ -18,10 +18,10 @@ import {
   ApiExcludeEndpoint,
 } from "@nestjs/swagger";
 import { LoginDto } from "./dto/login.dto";
-import { Request } from "express";
 import { RequestResetPasswordDto } from "./dto/request-reset-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { GoogleLoginDto } from "./dto/google-login.dto";
+import { Lang } from "src/common/decorators/lang.decorator";
 
 @ApiTags("Auth")
 @ApiBearerAuth()
@@ -46,8 +46,8 @@ export class AuthController {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: "Internal server error.",
   })
-  registerNewClient(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  registerNewClient(@Body() registerDto: RegisterDto, @Lang() lang: string) {
+    return this.authService.register(registerDto, lang);
   }
 
   @Post("login")
@@ -60,8 +60,8 @@ export class AuthController {
     status: HttpStatus.BAD_REQUEST,
     description: "Invalid credentials",
   })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto, @Lang() lang: string) {
+    return this.authService.login(loginDto, lang);
   }
 
   @Post("google")

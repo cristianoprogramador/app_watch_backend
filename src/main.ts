@@ -6,10 +6,13 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { CustomExceptionFilter } from "./error-logs/custom-exception.filter";
 import { ErrorLogsService } from "./error-logs/error-logs.service";
 import * as express from "express";
+import { LanguageMiddleware } from "./common/middlewares/language.middleware";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+  app.use(new LanguageMiddleware().use);
+
   app.use(
     (
       req: express.Request,
@@ -55,11 +58,6 @@ async function bootstrap() {
 
   const errorLogsService = app.get(ErrorLogsService);
   app.useGlobalFilters(new CustomExceptionFilter(errorLogsService));
-
-  // app.use((req, res, next) => {
-  //   console.log("Headers:", req.headers);
-  //   next();
-  // });
 
   await app.listen(3000);
 }
