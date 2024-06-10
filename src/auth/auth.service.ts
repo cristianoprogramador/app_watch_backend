@@ -181,7 +181,7 @@ export class AuthService {
     };
   }
 
-  async verifyToken(token: string) {
+  async verifyToken(token: string, lang: string) {
     try {
       const decoded = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
@@ -189,7 +189,10 @@ export class AuthService {
 
       const user = await this.usersService.findByUuid(decoded.sub);
       if (!user) {
-        throw new HttpException("User not found", HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          this.i18nService.get("authService.user_not_found", lang),
+          HttpStatus.NOT_FOUND
+        );
       }
 
       return {
@@ -204,20 +207,26 @@ export class AuthService {
       };
     } catch (error) {
       if (error.name === "TokenExpiredError") {
-        throw new HttpException("Expired token", HttpStatus.UNAUTHORIZED);
+        throw new HttpException(
+          this.i18nService.get("authService.expired_token", lang),
+          HttpStatus.UNAUTHORIZED
+        );
       } else {
         throw new HttpException(
-          "Invalid or expired token",
+          this.i18nService.get("authService.invalid_or_expired_token", lang),
           HttpStatus.UNAUTHORIZED
         );
       }
     }
   }
 
-  async requestResetPassword(email: string) {
+  async requestResetPassword(email: string, lang: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new HttpException("User not found", HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        this.i18nService.get("authService.user_not_found", lang),
+        HttpStatus.NOT_FOUND
+      );
     }
 
     const secret = this.configService.get<string>("RESET_PASSWORD_SECRET");
@@ -237,10 +246,15 @@ export class AuthService {
       },
     });
 
-    return { message: "Password reset email sent" };
+    return {
+      message: this.i18nService.get(
+        "authService.password_reset_email_sent",
+        lang
+      ),
+    };
   }
 
-  async resetPassword(token: string, newPassword: string) {
+  async resetPassword(token: string, newPassword: string, lang: string) {
     const secret = this.configService.get<string>("RESET_PASSWORD_SECRET");
     try {
       const decoded = verify(token, secret) as { email: string };
@@ -252,10 +266,15 @@ export class AuthService {
 
       await this.usersService.updatePassword(user.uuid, newPassword);
 
-      return { message: "Password reset successful" };
+      return {
+        message: this.i18nService.get(
+          "authService.password_reset_successful",
+          lang
+        ),
+      };
     } catch (error) {
       throw new HttpException(
-        "Invalid or expired token",
+        this.i18nService.get("authService.invalid_or_expired_token", lang),
         HttpStatus.BAD_REQUEST
       );
     }

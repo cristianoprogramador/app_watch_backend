@@ -80,10 +80,10 @@ export class AuthController {
     status: HttpStatus.BAD_REQUEST,
     description: "Invalid or expired token",
   })
-  async verifyToken(@Req() request: Request) {
+  async verifyToken(@Req() request: Request, @Lang() lang: string) {
     const authHeader = request.headers["authorization"];
     const token = authHeader?.split(" ")[1] || "";
-    return this.authService.verifyToken(token);
+    return this.authService.verifyToken(token, lang);
   }
 
   @Post("request-reset-password")
@@ -97,9 +97,13 @@ export class AuthController {
     description: "Bad request",
   })
   async requestResetPassword(
-    @Body() requestResetPasswordDto: RequestResetPasswordDto
+    @Body() requestResetPasswordDto: RequestResetPasswordDto,
+    @Lang() lang: string
   ) {
-    return this.authService.requestResetPassword(requestResetPasswordDto.email);
+    return this.authService.requestResetPassword(
+      requestResetPasswordDto.email,
+      lang
+    );
   }
 
   @Post("reset-password")
@@ -116,10 +120,14 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: "Invalid or expired token",
   })
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+    @Lang() lang: string
+  ) {
     return this.authService.resetPassword(
       resetPasswordDto.token,
-      resetPasswordDto.password
+      resetPasswordDto.password,
+      lang
     );
   }
 }

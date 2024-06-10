@@ -209,4 +209,12 @@ export class WebsiteMonitoringRepository {
       where: { uuid: routeId },
     });
   }
+
+  async countUserSites(userId: string): Promise<number> {
+    return this.prisma.website.count({
+      where: {
+        userId: userId,
+      },
+    });
+  }
 }

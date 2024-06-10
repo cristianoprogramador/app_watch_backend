@@ -1,6 +1,6 @@
 // src\website-monitoring\website-monitoring.service.ts
 
-import { Injectable, Logger } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { WebsiteStatusDto } from "./dto/website-status.dto";
 import { WebsiteMonitoringRepository } from "./website-monitoring.repository";
 import { CreateWebsiteDto } from "./dto/create-website.dto";
@@ -14,6 +14,8 @@ import axios from "axios";
 @Injectable()
 export class WebsiteMonitoringService {
   private readonly logger = new Logger(WebsiteMonitoringService.name);
+  private readonly MAX_SITES_PER_USER = 10;
+  private readonly MAX_ROUTES_PER_SITE = 20;
 
   constructor(
     private repository: WebsiteMonitoringRepository,
@@ -23,35 +25,43 @@ export class WebsiteMonitoringService {
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async checkAllWebsites(): Promise<void> {
-    // this.logger.debug("Checking all websites and routes");
     const websites = await this.repository.findAllWebsites();
-    for (const website of websites) {
-      const siteStatus = await this.checkWebsite(website.url, website.token);
-      await this.repository.updateSiteStatus(website.uuid, siteStatus.status);
+    const parallelChecks = 5;
 
-      const routesStatus = [];
-      for (const route of website.routes) {
-        const routeStatus = await this.checkRoute(route, website.token);
-        await this.repository.createOrUpdateRouteStatus({
-          routeId: route.uuid,
-          status: routeStatus.status,
-          response: routeStatus.response,
-        });
-        routesStatus.push({
-          routeId: route.uuid,
-          route: route.route,
-          status: routeStatus.status,
-          response: routeStatus.response,
-        });
-      }
+    for (let i = 0; i < websites.length; i += parallelChecks) {
+      const websiteChunk = websites.slice(i, i + parallelChecks);
+      await Promise.all(
+        websiteChunk.map((website) => this.checkWebsiteAndRoutes(website))
+      );
+    }
+  }
 
-      this.gateway.sendStatusUpdate(website.userId, {
-        siteUuid: website.uuid,
-        name: website.name,
-        status: siteStatus.status,
-        routes: routesStatus,
+  private async checkWebsiteAndRoutes(website) {
+    const siteStatus = await this.checkWebsite(website.url, website.token);
+    await this.repository.updateSiteStatus(website.uuid, siteStatus.status);
+
+    const routesStatus = [];
+    for (const route of website.routes) {
+      const routeStatus = await this.checkRoute(route, website.token);
+      await this.repository.createOrUpdateRouteStatus({
+        routeId: route.uuid,
+        status: routeStatus.status,
+        response: routeStatus.response,
+      });
+      routesStatus.push({
+        routeId: route.uuid,
+        route: route.route,
+        status: routeStatus.status,
+        response: routeStatus.response,
       });
     }
+
+    this.gateway.sendStatusUpdate(website.userId, {
+      siteUuid: website.uuid,
+      name: website.name,
+      status: siteStatus.status,
+      routes: routesStatus,
+    });
   }
 
   async checkWebsite(url: string, token?: string): Promise<WebsiteStatusDto> {
@@ -90,7 +100,6 @@ export class WebsiteMonitoringService {
 
       return { status: "success", response: JSON.stringify(response.data) };
     } catch (error) {
-      // console.error("Error checking route:", error);
       return { status: "failure", response: error.message };
     }
   }
@@ -100,6 +109,21 @@ export class WebsiteMonitoringService {
   }
 
   async createWebsite(data: CreateWebsiteDto) {
+    const userSitesCount = await this.repository.countUserSites(data.userId);
+    if (userSitesCount >= this.MAX_SITES_PER_USER) {
+      throw new HttpException(
+        `Limite de ${this.MAX_SITES_PER_USER} sites por usuário atingido.`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    if (data.routes.length > this.MAX_ROUTES_PER_SITE) {
+      throw new HttpException(
+        `Cada site pode ter no máximo ${this.MAX_ROUTES_PER_SITE} rotas.`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
     const website = await this.repository.createWebsite({
       name: data.name,
       url: data.url,
