@@ -24,6 +24,8 @@ import { CheckWebsiteDto } from "./dto/website-monitoring.dto";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { CreateWebsiteDto } from "./dto/create-website.dto";
 import { UpdateWebsiteDto } from "./dto/update-website.dto";
+import { PaginatedWebsiteDto } from "./dto/paginated-website.dto";
+import { PaginatedRouteDto } from "./dto/paginated-route.dto";
 
 @ApiTags("Website Monitoring")
 @UseGuards(JwtAuthGuard)
@@ -62,30 +64,77 @@ export class WebsiteMonitoringController {
     return this.websiteMonitoringService.createWebsite(data);
   }
 
-  @Get(":id")
+  @Get("listAllWebSites")
+  @ApiOperation({ summary: "List all websites" })
+  @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
+  @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })
+  @ApiQuery({ name: "search", required: false, type: String })
+  @ApiResponse({
+    status: 200,
+    description: "List of websites found",
+    type: PaginatedWebsiteDto,
+  })
+  findAllWebsites(
+    @Query("page") page: string,
+    @Query("itemsPerPage") itemsPerPage: string,
+    @Query("search") search?: string
+  ) {
+    return this.websiteMonitoringService.findAllWebsites(
+      +page,
+      +itemsPerPage,
+      search
+    );
+  }
+
+  @Get("listAllRoutes")
+  @ApiOperation({ summary: "List all routes" })
+  @ApiQuery({ name: "page", required: true, type: Number, example: 1 })
+  @ApiQuery({ name: "itemsPerPage", required: true, type: Number, example: 10 })
+  @ApiQuery({ name: "search", required: false, type: String })
+  @ApiResponse({
+    status: 200,
+    description: "List of routes found",
+    type: PaginatedRouteDto,
+  })
+  findAllRoutes(
+    @Query("page") page: string,
+    @Query("itemsPerPage") itemsPerPage: string,
+    @Query("search") search?: string
+  ) {
+    return this.websiteMonitoringService.findAllRoutes(
+      +page,
+      +itemsPerPage,
+      search
+    );
+  }
+
+  @Get(":uuid")
   @ApiOperation({ summary: "Get website details by ID" })
   @ApiResponse({ status: 200, description: "Website details" })
   @ApiResponse({ status: 404, description: "Website not found" })
-  async findWebsiteById(@Param("id") id: string) {
-    return this.websiteMonitoringService.findWebsiteById(id);
+  async findWebsiteById(@Param("uuid") uuid: string) {
+    return this.websiteMonitoringService.findWebsiteById(uuid);
   }
 
-  @Delete(":id")
+  @Delete(":uuid")
   @ApiOperation({ summary: "Delete a website by ID" })
   @ApiResponse({ status: 200, description: "Website deleted successfully" })
   @ApiResponse({ status: 404, description: "Website not found" })
-  async deleteWebsite(@Param("id") id: string) {
-    return this.websiteMonitoringService.deleteWebsite(id);
+  async deleteWebsite(@Param("uuid") uuid: string) {
+    return this.websiteMonitoringService.deleteWebsite(uuid);
   }
 
-  @Patch(":id")
+  @Patch(":uuid")
   @ApiOperation({ summary: "Update website details by ID" })
   @ApiBody({ type: UpdateWebsiteDto })
   @ApiResponse({ status: 200, description: "Website updated successfully" })
   @ApiResponse({ status: 400, description: "Invalid parameters" })
   @ApiResponse({ status: 404, description: "Website not found" })
-  async updateWebsite(@Param("id") id: string, @Body() data: UpdateWebsiteDto) {
-    return this.websiteMonitoringService.updateWebsite(id, data);
+  async updateWebsite(
+    @Param("id") uuid: string,
+    @Body() data: UpdateWebsiteDto
+  ) {
+    return this.websiteMonitoringService.updateWebsite(uuid, data);
   }
 
   @Delete("routes/:routeId")
@@ -96,15 +145,15 @@ export class WebsiteMonitoringController {
     return this.websiteMonitoringService.deleteRoute(routeId);
   }
 
-  @Post("update-status/:id")
+  @Post("update-status/:uuid")
   @ApiOperation({ summary: "Update website status by ID" })
   @ApiResponse({
     status: 200,
     description: "Website status updated successfully",
   })
   @ApiResponse({ status: 404, description: "Website not found" })
-  async updateWebsiteStatus(@Param("id") id: string): Promise<void> {
-    return this.websiteMonitoringService.updateWebsiteStatus(id);
+  async updateWebsiteStatus(@Param("uuid") uuid: string): Promise<void> {
+    return this.websiteMonitoringService.updateWebsiteStatus(uuid);
   }
 
   @Get("user/:userId")

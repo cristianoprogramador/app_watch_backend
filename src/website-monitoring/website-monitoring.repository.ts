@@ -41,6 +41,89 @@ export class WebsiteMonitoringRepository {
     });
   }
 
+  async findAllWebsitesWithPagination(
+    page: number,
+    itemsPerPage: number,
+    search?: string
+  ) {
+    const skip = (page - 1) * itemsPerPage;
+    const where: Prisma.WebsiteWhereInput = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { url: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {};
+
+    const [total, websites] = await Promise.all([
+      this.prisma.website.count({ where }),
+      this.prisma.website.findMany({
+        where,
+        skip,
+        take: itemsPerPage,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: { email: true },
+          },
+          routes: true,
+        },
+      }),
+    ]);
+
+    const websitesWithRouteCount = websites.map((website) => ({
+      ...website,
+      routeCount: website.routes.length,
+    }));
+
+    return {
+      total,
+      websites: websitesWithRouteCount,
+    };
+  }
+
+  async findAllRoutesWithPagination(
+    page: number,
+    itemsPerPage: number,
+    search?: string
+  ) {
+    const skip = (page - 1) * itemsPerPage;
+    const where: Prisma.RouteWhereInput = search
+      ? {
+          route: { contains: search, mode: "insensitive" },
+        }
+      : {};
+
+    const [total, routes] = await Promise.all([
+      this.prisma.route.count({ where }),
+      this.prisma.route.findMany({
+        where,
+        skip,
+        take: itemsPerPage,
+        orderBy: { createdAt: "desc" },
+        include: {
+          website: {
+            include: {
+              user: {
+                select: { email: true },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      total,
+      routes: routes.map((route) => ({
+        ...route,
+        websiteName: route.website.name,
+        userEmail: route.website.user.email,
+      })),
+    };
+  }
+
   async findAllWebsitesByUserId(
     userId: string,
     page: number,

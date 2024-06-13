@@ -75,6 +75,36 @@ export class WebsiteMonitoringService {
     }
   }
 
+  async findAllWebsites(page: number, itemsPerPage: number, search?: string) {
+    try {
+      const result = await this.repository.findAllWebsitesWithPagination(
+        page,
+        itemsPerPage,
+        search
+      );
+      this.logger.log(`Fetched ${result.total} websites`);
+      return result;
+    } catch (error) {
+      this.logger.error("Error fetching websites", error);
+      throw error;
+    }
+  }
+
+  async findAllRoutes(page: number, itemsPerPage: number, search?: string) {
+    try {
+      const result = await this.repository.findAllRoutesWithPagination(
+        page,
+        itemsPerPage,
+        search
+      );
+      this.logger.log(`Fetched ${result.total} routes`);
+      return result;
+    } catch (error) {
+      this.logger.error("Error fetching routes", error);
+      throw error;
+    }
+  }
+
   async checkRoute(
     route,
     token?: string
