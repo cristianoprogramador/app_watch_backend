@@ -131,7 +131,7 @@ export class WebsiteMonitoringController {
   @ApiResponse({ status: 400, description: "Invalid parameters" })
   @ApiResponse({ status: 404, description: "Website not found" })
   async updateWebsite(
-    @Param("id") uuid: string,
+    @Param("uuid") uuid: string,
     @Body() data: UpdateWebsiteDto
   ) {
     return this.websiteMonitoringService.updateWebsite(uuid, data);
