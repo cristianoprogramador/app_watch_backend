@@ -21,4 +21,10 @@ export class UpdateUserDetailsDto {
     description: "Type of document",
   })
   typeDocument?: PeopleDocumentType;
+
+  @ApiPropertyOptional({
+    description: "Receive Notifications",
+    example: false,
+  })
+  receiveNotifications?: boolean;
 }

@@ -39,7 +39,7 @@ export class UserDetailsRepository {
     });
   }
 
-  async update(uuid: string, data: UpdateUserDetailsDto) {
+  async update(uuid: string, data: Partial<UpdateUserDetailsDto>) {
     return this.prisma.userDetails.update({
       where: { uuid },
       data,

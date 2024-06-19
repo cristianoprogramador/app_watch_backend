@@ -33,4 +33,11 @@ export class CreateUserDetailsDto {
     required: false,
   })
   readonly profileImageUrl?: string;
+
+  @ApiProperty({
+    example: false,
+    description: "Receive Notifications",
+    required: false,
+  })
+  readonly receiveNotifications?: boolean;
 }

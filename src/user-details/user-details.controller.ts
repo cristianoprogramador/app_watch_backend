@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Patch,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -27,6 +28,7 @@ import { CreateUserDetailsDto } from "./dto/create-user-details.dto";
 import { UpdateUserDetailsDto } from "./dto/update-user-details.dto";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { UserDetails } from "@prisma/client";
+import { UpdateNotificationStatusDto } from "./dto/update-notification-status.dto";
 
 @ApiTags("UserDetails")
 @UseGuards(JwtAuthGuard)
@@ -85,5 +87,23 @@ export class UserDetailsController {
   })
   remove(@Param("uuid", UuidValidationPipe) uuid: string): Promise<void> {
     return this.userDetailsService.remove(uuid);
+  }
+
+  @Patch(":uuid/notification-status")
+  @ApiOperation({ summary: "Update notification status for a user" })
+  @ApiParam({
+    name: "uuid",
+    description:
+      "Unique identifier of the user details to update notification status",
+  })
+  async updateNotificationStatus(
+    @Param("uuid") uuid: string,
+    @Body() updateNotificationStatusDto: UpdateNotificationStatusDto
+  ): Promise<{ message: string }> {
+    await this.userDetailsService.updateNotificationStatus(
+      uuid,
+      updateNotificationStatusDto
+    );
+    return { message: "Notification status updated successfully" };
   }
 }

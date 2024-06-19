@@ -5,6 +5,7 @@ import { UserDetailsRepository } from "./user-details.repository";
 import { PeopleDocumentType, UserDetails } from "@prisma/client";
 import { CreateUserDetailsDto } from "./dto/create-user-details.dto";
 import { UpdateUserDetailsDto } from "./dto/update-user-details.dto";
+import { UpdateNotificationStatusDto } from "./dto/update-notification-status.dto";
 
 export type CreateUserDetailsData = {
   name: string;
@@ -51,5 +52,14 @@ export class UserDetailsService {
 
   async remove(uuid: string): Promise<void> {
     await this.userDetailsRepository.remove(uuid);
+  }
+
+  async updateNotificationStatus(
+    uuid: string,
+    updateNotificationStatusDto: UpdateNotificationStatusDto
+  ): Promise<void> {
+    await this.userDetailsRepository.update(uuid, {
+      receiveNotifications: updateNotificationStatusDto.receiveNotifications,
+    });
   }
 }

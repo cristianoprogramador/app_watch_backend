@@ -124,6 +124,7 @@ export class AuthService {
           uuid: user.userDetails.uuid,
           name: user.userDetails.name,
           profileImageUrl: user.userDetails.profileImageUrl || "",
+          notifications: user.userDetails.receiveNotifications,
         },
       },
     };
@@ -176,6 +177,7 @@ export class AuthService {
           uuid: user.userDetails.uuid,
           name: user.userDetails.name,
           profileImageUrl: user.userDetails.profileImageUrl || "",
+          notifications: user.userDetails.receiveNotifications,
         },
       },
     };
@@ -203,6 +205,7 @@ export class AuthService {
           uuid: user.userDetails.uuid,
           name: user.userDetails.name,
           profileImageUrl: user.userDetails.profileImageUrl || "",
+          notifications: user.userDetails.receiveNotifications,
         },
       };
     } catch (error) {
