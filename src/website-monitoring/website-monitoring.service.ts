@@ -9,6 +9,7 @@ import { Cron, CronExpression } from "@nestjs/schedule";
 import { WebsiteMonitoringGateway } from "./website-monitoring.gateway";
 import { UpdateWebsiteDto } from "./dto/update-website.dto";
 import { PrismaService } from "src/prisma/prisma.service";
+import { MailService } from "src/mail/mail.service";
 import axios from "axios";
 
 @Injectable()
@@ -20,7 +21,8 @@ export class WebsiteMonitoringService {
   constructor(
     private repository: WebsiteMonitoringRepository,
     private gateway: WebsiteMonitoringGateway,
-    private prisma: PrismaService
+    private prisma: PrismaService,
+    private mailService: MailService
   ) {}
 
   @Cron(CronExpression.EVERY_30_MINUTES)
@@ -41,6 +43,9 @@ export class WebsiteMonitoringService {
     await this.repository.updateSiteStatus(website.uuid, siteStatus.status);
 
     const routesStatus = [];
+    let hasRouteError = false;
+    let routeWithError = "";
+
     for (const route of website.routes) {
       const routeStatus = await this.checkRoute(route, website.token);
       await this.repository.createOrUpdateRouteStatus({
@@ -48,12 +53,18 @@ export class WebsiteMonitoringService {
         status: routeStatus.status,
         response: routeStatus.response,
       });
+
       routesStatus.push({
         routeId: route.uuid,
         route: route.route,
         status: routeStatus.status,
         response: routeStatus.response,
       });
+
+      if (routeStatus.status === "failure") {
+        hasRouteError = true;
+        routeWithError = route.route;
+      }
     }
 
     this.gateway.sendStatusUpdate(website.userId, {
@@ -62,6 +73,70 @@ export class WebsiteMonitoringService {
       status: siteStatus.status,
       routes: routesStatus,
     });
+
+    if (siteStatus.status === "offline") {
+      await this.sendWebsiteErrorNotification(website.userId, website.name);
+    } else if (hasRouteError) {
+      await this.sendRouteErrorNotification(
+        website.userId,
+        website.name,
+        routeWithError
+      );
+    }
+  }
+
+  private async sendWebsiteErrorNotification(
+    userId: string,
+    websiteName: string
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { uuid: userId },
+      include: { userDetails: true },
+    });
+
+    const lastEmail = await this.repository.findLastEmailSent(
+      user.email,
+      websiteName
+    );
+
+    if (
+      !lastEmail ||
+      new Date().getTime() - new Date(lastEmail.sentAt).getTime() > 86400000
+    ) {
+      await this.mailService.sendWebsiteErrorNotification(
+        user.email,
+        websiteName
+      );
+      await this.repository.recordEmailSent(user.email, websiteName);
+    }
+  }
+
+  private async sendRouteErrorNotification(
+    userId: string,
+    websiteName: string,
+    routePath: string
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { uuid: userId },
+      include: { userDetails: true },
+    });
+
+    const lastEmail = await this.repository.findLastEmailSent(
+      user.email,
+      websiteName
+    );
+
+    if (
+      !lastEmail ||
+      new Date().getTime() - new Date(lastEmail.sentAt).getTime() > 86400000
+    ) {
+      await this.mailService.sendRouteErrorNotification(
+        user.email,
+        websiteName,
+        routePath
+      );
+      await this.repository.recordEmailSent(user.email, websiteName);
+    }
   }
 
   async checkWebsite(url: string, token?: string): Promise<WebsiteStatusDto> {

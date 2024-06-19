@@ -6,7 +6,6 @@ import { RegisterDto } from "./dto/register.dto";
 import { Prisma } from "@prisma/client";
 import { UserDetailsService } from "src/user-details/user-details.service";
 import { LoginDto } from "./dto/login.dto";
-import { MailerService } from "@nestjs-modules/mailer";
 import { sign, verify } from "jsonwebtoken";
 import { ConfigService } from "@nestjs/config";
 import { OAuth2Client } from "google-auth-library";
@@ -15,6 +14,7 @@ import axios from "axios";
 import { randomBytes } from "crypto";
 import { I18nService } from "src/i18n/i18n.service";
 import { Lang } from "src/common/decorators/lang.decorator";
+import { MailService } from "src/mail/mail.service";
 
 @Injectable()
 export class AuthService {
@@ -25,7 +25,7 @@ export class AuthService {
     private usersService: UsersService,
     private userDetailsService: UserDetailsService,
     private jwtService: JwtService,
-    private mailerService: MailerService,
+    private mailService: MailService,
     private configService: ConfigService,
     private i18nService: I18nService
   ) {
@@ -239,15 +239,11 @@ export class AuthService {
     const frontendUrl = this.configService.get<string>("FRONTEND_URL");
     const resetPasswordUrl = `${frontendUrl}/recover-password?token=${resetToken}`;
 
-    await this.mailerService.sendMail({
-      to: email,
-      subject: "Password Reset Request",
-      template: "reset-password",
-      context: {
-        name: user.userDetails.name,
-        url: resetPasswordUrl,
-      },
-    });
+    await this.mailService.sendRecoverPasswordEmail(
+      user.email,
+      user.userDetails.name,
+      resetPasswordUrl
+    );
 
     return {
       message: this.i18nService.get(

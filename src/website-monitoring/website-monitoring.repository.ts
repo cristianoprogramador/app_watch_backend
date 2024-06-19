@@ -300,4 +300,26 @@ export class WebsiteMonitoringRepository {
       },
     });
   }
+
+  async recordEmailSent(email: string, websiteName: string) {
+    await this.prisma.emailLog.create({
+      data: {
+        email,
+        websiteName,
+        sentAt: new Date(),
+      },
+    });
+  }
+
+  async findLastEmailSent(email: string, websiteName: string) {
+    return this.prisma.emailLog.findFirst({
+      where: {
+        email,
+        websiteName,
+      },
+      orderBy: {
+        sentAt: "desc",
+      },
+    });
+  }
 }

@@ -14,6 +14,7 @@ import { WebsiteMonitoringModule } from "./website-monitoring/website-monitoring
 import { I18nService } from "./i18n/i18n.service";
 import { I18nModule } from "./i18n/i18n.module";
 import { LanguageMiddleware } from "./common/middlewares/language.middleware";
+import { MailModule } from "./mail/mail.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { LanguageMiddleware } from "./common/middlewares/language.middleware";
     ErrorLogsModule,
     WebsiteMonitoringModule,
     I18nModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [
