@@ -14,6 +14,15 @@ export class ErrorLogsService {
     const response =
       exception instanceof HttpException ? exception.getResponse() : {};
 
+    const error =
+      exception instanceof HttpException &&
+      typeof response === "object" &&
+      "error" in response
+        ? response["error"]
+        : status === HttpStatus.FORBIDDEN
+          ? "Forbidden"
+          : "Internal Server Error";
+
     const filteredHeaders = {
       "User-Agent": request.headers["user-agent"],
       Referer: request.headers["referer"],
@@ -26,10 +35,7 @@ export class ErrorLogsService {
         typeof response === "object" && "message" in response
           ? response["message"]
           : exception.message || "Unexpected error occurred",
-      error:
-        typeof response === "object" && "error" in response
-          ? response["error"]
-          : "Internal Server Error",
+      error: error,
       url: request.url,
       method: request.method,
       headers: JSON.stringify(filteredHeaders),

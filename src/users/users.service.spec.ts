@@ -76,7 +76,7 @@ describe("UsersService", () => {
         expect.objectContaining({
           data: {
             email: createUserDto.email,
-            password: expect.any(String), // Expect any string for the hashed password
+            password: expect.any(String),
             type: createUserDto.type,
             userDetailsUuid: createUserDto.userDetailsUuid,
           },
