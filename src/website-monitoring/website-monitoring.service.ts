@@ -15,6 +15,8 @@ import axios from "axios";
 @Injectable()
 export class WebsiteMonitoringService {
   private readonly logger = new Logger(WebsiteMonitoringService.name);
+
+  // Constants for site limits and routes per user
   private readonly MAX_SITES_PER_USER = 10;
   private readonly MAX_ROUTES_PER_SITE = 20;
 
@@ -25,6 +27,7 @@ export class WebsiteMonitoringService {
     private mailService: MailService
   ) {}
 
+  // Method scheduled to run every 30 minutes
   @Cron(CronExpression.EVERY_30_MINUTES)
   async checkAllWebsites(): Promise<void> {
     const websites = await this.repository.findAllWebsites();
@@ -39,21 +42,27 @@ export class WebsiteMonitoringService {
   }
 
   private async checkWebsiteAndRoutes(website) {
+    // Check the status of the website
     const siteStatus = await this.checkWebsite(website.url, website.token);
+    // Update the website status in the repository
     await this.repository.updateSiteStatus(website.uuid, siteStatus.status);
 
     const routesStatus = [];
     let hasRouteError = false;
     let routeWithError = "";
 
+    // Loop through each route of the website
     for (const route of website.routes) {
+      // Check the status of the current route
       const routeStatus = await this.checkRoute(route, website.token);
+      // Create or update the route status in the repository
       await this.repository.createOrUpdateRouteStatus({
         routeId: route.uuid,
         status: routeStatus.status,
         response: routeStatus.response,
       });
 
+      // Collect the status of each route
       routesStatus.push({
         routeId: route.uuid,
         route: route.route,
@@ -61,12 +70,14 @@ export class WebsiteMonitoringService {
         response: routeStatus.response,
       });
 
+      // Check if there is any route with an error
       if (routeStatus.status === "failure") {
         hasRouteError = true;
         routeWithError = route.route;
       }
     }
 
+    // Send a status update to the user through the gateway
     this.gateway.sendStatusUpdate(website.userId, {
       siteUuid: website.uuid,
       name: website.name,
@@ -74,6 +85,7 @@ export class WebsiteMonitoringService {
       routes: routesStatus,
     });
 
+    // Send notifications based on the status of the website and its routes
     if (siteStatus.status === "offline") {
       await this.sendWebsiteErrorNotification(website.userId, website.name);
     } else if (hasRouteError) {
@@ -85,67 +97,84 @@ export class WebsiteMonitoringService {
     }
   }
 
+  // Function to send an email notification if the website is offline
   private async sendWebsiteErrorNotification(
     userId: string,
     websiteName: string
   ) {
+    // Fetch the user details
     const user = await this.prisma.user.findUnique({
       where: { uuid: userId },
       include: { userDetails: true },
     });
 
+    // Find the last email sent to the user for this website
     const lastEmail = await this.repository.findLastEmailSent(
       user.email,
       websiteName
     );
 
+    // Check if the last email was sent more than 24 hours ago
     if (
       !lastEmail ||
       new Date().getTime() - new Date(lastEmail.sentAt).getTime() > 86400000
     ) {
+      // Send the error notification email
       await this.mailService.sendWebsiteErrorNotification(
         user.email,
         websiteName
       );
+      // Record the email sent time
       await this.repository.recordEmailSent(user.email, websiteName);
     }
   }
 
+  // Function to send an email notification if a route has an error
   private async sendRouteErrorNotification(
     userId: string,
     websiteName: string,
     routePath: string
   ) {
+    // Fetch the user details
     const user = await this.prisma.user.findUnique({
       where: { uuid: userId },
       include: { userDetails: true },
     });
 
+    // Find the last email sent to the user for this website
     const lastEmail = await this.repository.findLastEmailSent(
       user.email,
       websiteName
     );
 
+    // Check if the last email was sent more than 24 hours ago
     if (
       !lastEmail ||
       new Date().getTime() - new Date(lastEmail.sentAt).getTime() > 86400000
     ) {
+      // Send the route error notification email
       await this.mailService.sendRouteErrorNotification(
         user.email,
         websiteName,
         routePath
       );
+      // Record the email sent time
       await this.repository.recordEmailSent(user.email, websiteName);
     }
   }
 
+  // Function to check the status of a website
   async checkWebsite(url: string, token?: string): Promise<WebsiteStatusDto> {
     try {
+      // Set up headers with token if provided
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      // Make a request to the website URL
       const response = await fetch(url, { headers });
 
+      // Return the status based on the response
       return { status: response.ok ? "online" : "offline" };
     } catch (error) {
+      // Return offline status in case of an error
       return { status: "offline" };
     }
   }

@@ -63,6 +63,7 @@ export class AuthService {
             uuid: userDetails.uuid,
             name: userDetails.name,
             profileImageUrl: userDetails.profileImageUrl || "",
+            notifications: userDetails.receiveNotifications,
           },
         },
       };

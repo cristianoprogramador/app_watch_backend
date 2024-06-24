@@ -137,4 +137,6 @@ model EmailLog {
   email       String
   websiteName String
   sentAt      DateTime @default(now())
+
+  @@map("email_logs")
 }
